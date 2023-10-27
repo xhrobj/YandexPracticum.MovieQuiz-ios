@@ -53,13 +53,22 @@
                                     </userDefinedRuntimeAttribute>
                                 </userDefinedRuntimeAttributes>
                             </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Вопрос:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="s53-Ne-p1e">
+                                <rect key="frame" x="20" y="58" width="72" height="24"/>
+                                <color key="tintColor" name="YP White"/>
+                                <fontDescription key="fontDescription" name="YSDisplay-Medium" family="YS Display" pointSize="20"/>
+                                <nil key="textColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black"/>
                         <constraints>
+                            <constraint firstItem="s53-Ne-p1e" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="3Pk-3B-vAl"/>
                             <constraint firstItem="z1q-UX-2Eg" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="A6V-Fy-ZNN"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="z1q-UX-2Eg" secondAttribute="bottom" id="CG3-Gz-P2e"/>
                             <constraint firstItem="CEg-nS-eB9" firstAttribute="centerY" secondItem="z1q-UX-2Eg" secondAttribute="centerY" id="GW5-qs-j6B"/>
+                            <constraint firstItem="s53-Ne-p1e" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="O3b-aw-jmd"/>
                             <constraint firstItem="CEg-nS-eB9" firstAttribute="height" secondItem="z1q-UX-2Eg" secondAttribute="height" id="Pc0-wQ-g0F"/>
                             <constraint firstItem="CEg-nS-eB9" firstAttribute="leading" secondItem="z1q-UX-2Eg" secondAttribute="trailing" constant="20" id="RKf-ph-PK5"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="CEg-nS-eB9" secondAttribute="trailing" constant="20" id="mbV-AL-Wlx"/>
