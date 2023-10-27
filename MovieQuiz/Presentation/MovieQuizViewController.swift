@@ -1,7 +1,21 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    // MARK: - Lifecycle
+    
+    // MARK: - @IBOutlets
+    
+    @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet private weak var moviePosterImageView: UIImageView!
+    @IBOutlet private weak var questionLabel: UILabel!
+    
+    
+    // MARK: - @IBActions
+    
+    @IBAction private func noButtonTapped() {}
+    @IBAction private func yesButtonTapped() {}
+    
+    // MARK: - View Lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
     }
