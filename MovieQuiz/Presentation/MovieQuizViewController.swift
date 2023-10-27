@@ -2,6 +2,8 @@ import UIKit
 
 final class MovieQuizViewController: UIViewController {
     
+    private var questions: [QuizQuestion] = []
+    
     // MARK: - @IBOutlets
     
     @IBOutlet private weak var counterLabel: UILabel!
@@ -18,7 +20,76 @@ final class MovieQuizViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        loadData()
     }
+}
+
+private extension MovieQuizViewController {
+    func loadData() {
+        questions = [
+            QuizQuestion(
+                image: "The Godfather",
+                question: "Рейтинг этого фильма больше чем 6?", // 9,2
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "The Dark Knight",
+                question: "Рейтинг этого фильма больше чем 6?", // 9
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "Kill Bill",
+                question: "Рейтинг этого фильма больше чем 6?", // 8,1
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "The Avengers",
+                question: "Рейтинг этого фильма больше чем 6?", // 8
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "Deadpool",
+                question: "Рейтинг этого фильма больше чем 6?", // 8
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "The Green Knight",
+                question: "Рейтинг этого фильма больше чем 6?", // 6,6
+                isCorrectAnswer: true
+            ),
+            QuizQuestion(
+                image: "Old",
+                question: "Рейтинг этого фильма больше чем 6?", // 5,8
+                isCorrectAnswer: false
+            ),
+            QuizQuestion(
+                image: "The Ice Age Adventures of Buck Wild",
+                question: "Рейтинг этого фильма больше чем 6?", // 4,3
+                isCorrectAnswer: false
+            ),
+            QuizQuestion(
+                image: "Tesla",
+                question: "Рейтинг этого фильма больше чем 6?", // 5,1
+                isCorrectAnswer: false
+            ),
+            QuizQuestion(
+                image: "Vivarium",
+                question: "Рейтинг этого фильма больше чем 6?", // 5,8
+                isCorrectAnswer: false
+            )
+        ]
+    }
+}
+
+// NOTE: Спринт 4/17: 4 → Тема 3/4: Реализация логики по макету → Урок 2/6
+// Для своего первого проекта мы будем пользоваться только файлом MovieQuizViewController.swift — весь код напишем в нём.
+// Если понадобится создать дополнительные классы или структуры, их также стоит расположить внутри этого файла.
+
+struct QuizQuestion {
+    let image: String // совпадает с названием картинки афиши фильма в Assets
+    let question: String // строка с вопросом о рейтинге фильма
+    let isCorrectAnswer: Bool // правильный ответ на вопрос
 }
 
 /*
