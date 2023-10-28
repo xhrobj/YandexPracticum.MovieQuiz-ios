@@ -113,7 +113,7 @@
                     </view>
                     <connections>
                         <outlet property="counterLabel" destination="zlV-So-HgH" id="C3q-fA-Eep"/>
-                        <outlet property="moviePosterImageView" destination="H04-Nc-gKj" id="ZIj-XH-tG4"/>
+                        <outlet property="movieImageView" destination="H04-Nc-gKj" id="ZIj-XH-tG4"/>
                         <outlet property="questionLabel" destination="HZ0-GT-R9j" id="uYk-C1-m7D"/>
                     </connections>
                 </viewController>

@@ -1,7 +1,6 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    
     private var questions: [QuizQuestion] = []
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
@@ -9,7 +8,7 @@ final class MovieQuizViewController: UIViewController {
     // MARK: - @IBOutlets
     
     @IBOutlet private weak var counterLabel: UILabel!
-    @IBOutlet private weak var moviePosterImageView: UIImageView!
+    @IBOutlet private weak var movieImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
 
     // MARK: - View lifecycle
@@ -17,6 +16,7 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupView()
         loadData()
         showNextQuestion()
     }
@@ -26,92 +26,153 @@ final class MovieQuizViewController: UIViewController {
 
 private extension MovieQuizViewController {
     @IBAction func noButtonTapped() {
-        print("no")
+        let userAnswer = AnswerResult.no
+        handleAnswerAndMoveNextStep(userAnswer)
     }
     
     @IBAction func yesButtonTapped() {
-        print("yes")
+        let userAnswer = AnswerResult.yes
+        handleAnswerAndMoveNextStep(userAnswer)
     }
 }
 
 // MARK: - Private methods
 
 private extension MovieQuizViewController {
+    func handleAnswerAndMoveNextStep(_ answer: AnswerResult) {
+        let isCorrect = isCorrectAnswer(answer)
+        correctAnswers += isCorrect ? 1 : 0
+        
+        showAnswerResult(isCorrect)
+        
+        let delayInSeconds: Double = 1
+        // запускаем задачу через 1 секунду c помощью диспетчера задач
+        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
+            // код, который мы хотим вызвать через 1 секунду
+            self.showNextQuestionOrResults()
+        }
+    }
+    
+    func showAnswerResult(_ isCorrectAnswer: Bool) {
+        let borderColor: UIColor = isCorrectAnswer ? .ypGreen : .ypRed
+        updateMovieImageViewBorder(with: borderColor)
+    }
+    
+    func showNextQuestionOrResults() {
+        guard !isLastQuestion() else {
+            showResults()
+            return
+        }
+
+        showNextQuestion()
+    }
+    
+    func showResults() {
+        // показываем финальный результат
+    }
+    
     func showNextQuestion() {
-        let viewModel = convert(model: questions[currentQuestionIndex])
+        currentQuestionIndex += 1
+        let viewModel = convert(model: currentQuestion())
         updateView(with: viewModel)
     }
-    
-    func convert(model: QuizQuestion) -> QuizStepViewModel {
-        QuizStepViewModel(
-            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
-            question: model.question,
-            image: UIImage(named: model.image) ?? UIImage()
-        )
-    }
-    
+}
+
+// MARK: -
+
+private extension MovieQuizViewController {
     func updateView(with viewModel: QuizStepViewModel) {
         counterLabel.text = viewModel.questionNumber
-        moviePosterImageView.image = viewModel.image
         questionLabel.text = viewModel.question
+        movieImageView.image = viewModel.image
+        updateMovieImageViewBorder(with: .clear)
     }
     
+    func updateMovieImageViewBorder(with color: UIColor) {
+        movieImageView.layer.borderColor = color.cgColor
+    }
+    
+    func setupView() {
+        movieImageView.layer.masksToBounds = true
+        movieImageView.layer.borderWidth = 8
+        movieImageView.layer.cornerRadius = 20
+    }
 }
 
 // MARK: - Data
 
 private extension MovieQuizViewController {
+    func isCorrectAnswer(_ answer: AnswerResult) -> Bool {
+        currentQuestion().correctAnswer == answer
+    }
+    
+    func isLastQuestion() -> Bool {
+        currentQuestionIndex + 1 >= questions.count
+    }
+    
+    func currentQuestion() -> QuizQuestion {
+        questions[currentQuestionIndex]
+    }
+    
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        QuizStepViewModel(
+            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
+            question: model.text,
+            image: UIImage(named: model.imageName) ?? UIImage()
+        )
+    }
+    
     func loadData() {
         questions = [
             QuizQuestion(
-                image: "The Godfather",
-                question: "Рейтинг этого фильма больше чем 6?", // 9,2
-                isCorrectAnswer: true
+                imageName: "The Godfather",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 9,2
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "The Dark Knight",
-                question: "Рейтинг этого фильма больше чем 6?", // 9
-                isCorrectAnswer: true
+                imageName: "The Dark Knight",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 9
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "Kill Bill",
-                question: "Рейтинг этого фильма больше чем 6?", // 8,1
-                isCorrectAnswer: true
+                imageName: "Kill Bill",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8,1
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "The Avengers",
-                question: "Рейтинг этого фильма больше чем 6?", // 8
-                isCorrectAnswer: true
+                imageName: "The Avengers",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "Deadpool",
-                question: "Рейтинг этого фильма больше чем 6?", // 8
-                isCorrectAnswer: true
+                imageName: "Deadpool",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "The Green Knight",
-                question: "Рейтинг этого фильма больше чем 6?", // 6,6
-                isCorrectAnswer: true
+                imageName: "The Green Knight",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 6,6
+                correctAnswer: .yes
             ),
             QuizQuestion(
-                image: "Old",
-                question: "Рейтинг этого фильма больше чем 6?", // 5,8
-                isCorrectAnswer: false
+                imageName: "Old",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,8
+                correctAnswer: .no
             ),
             QuizQuestion(
-                image: "The Ice Age Adventures of Buck Wild",
-                question: "Рейтинг этого фильма больше чем 6?", // 4,3
-                isCorrectAnswer: false
+                imageName: "The Ice Age Adventures of Buck Wild",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 4,3
+                correctAnswer: .no
             ),
             QuizQuestion(
-                image: "Tesla",
-                question: "Рейтинг этого фильма больше чем 6?", // 5,1
-                isCorrectAnswer: false
+                imageName: "Tesla",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,1
+                correctAnswer: .no
             ),
             QuizQuestion(
-                image: "Vivarium",
-                question: "Рейтинг этого фильма больше чем 6?", // 5,8
-                isCorrectAnswer: false
+                imageName: "Vivarium",
+                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,8
+                correctAnswer: .no
             )
         ]
     }
@@ -123,78 +184,18 @@ private extension MovieQuizViewController {
 // Для своего первого проекта мы будем пользоваться только файлом MovieQuizViewController.swift — весь код напишем в нём.
 // Если понадобится создать дополнительные классы или структуры, их также стоит расположить внутри этого файла.
 
-struct QuizQuestion {
-    let image: String // совпадает с названием картинки афиши фильма в Assets
-    let question: String // строка с вопросом о рейтинге фильма
-    let isCorrectAnswer: Bool // правильный ответ на вопрос
+private enum AnswerResult {
+    case yes, no
 }
 
-struct QuizStepViewModel {
+private struct QuizQuestion {
+    let imageName: String // NOTE: совпадает с названием картинки афиши фильма в Assets
+    let text: String
+    let correctAnswer: AnswerResult
+}
+
+private struct QuizStepViewModel {
     let questionNumber: String
     let question: String
     let image: UIImage
 }
-
-/*
- Mock-данные
- 
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
-
-
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
-
-
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
-
-
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
-
-
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- */
