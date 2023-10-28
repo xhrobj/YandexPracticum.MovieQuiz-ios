@@ -1,24 +1,27 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    private var questions: [QuizQuestion] = []
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    
+    private lazy var questions: [QuizQuestion] = {
+        loadQuestions()
+    }()
     
     // MARK: - @IBOutlets
     
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var movieImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
-
+    @IBOutlet weak var noButton: UIButton!
+    @IBOutlet weak var yesButton: UIButton!
+    
     // MARK: - View lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         setupView()
-        loadData()
-        showNextQuestion()
+        startQuiz()
     }
 }
 
@@ -26,30 +29,28 @@ final class MovieQuizViewController: UIViewController {
 
 private extension MovieQuizViewController {
     @IBAction func noButtonTapped() {
-        let userAnswer = AnswerResult.no
-        handleAnswerAndMoveNextStep(userAnswer)
+        handleAnswerAndMoveNextStep(userAnswer: .no)
     }
     
     @IBAction func yesButtonTapped() {
-        let userAnswer = AnswerResult.yes
-        handleAnswerAndMoveNextStep(userAnswer)
+        handleAnswerAndMoveNextStep(userAnswer: .yes)
     }
 }
 
 // MARK: - Private methods
 
 private extension MovieQuizViewController {
-    func handleAnswerAndMoveNextStep(_ answer: AnswerResult) {
+    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResult) {
         let isCorrect = isCorrectAnswer(answer)
         correctAnswers += isCorrect ? 1 : 0
         
         showAnswerResult(isCorrect)
         
+        updateButtons(isEnabled: false)
         let delayInSeconds: Double = 1
-        // запускаем задачу через 1 секунду c помощью диспетчера задач
         DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
-            // код, который мы хотим вызвать через 1 секунду
             self.showNextQuestionOrResults()
+            self.updateButtons(isEnabled: true)
         }
     }
     
@@ -63,24 +64,47 @@ private extension MovieQuizViewController {
             showResults()
             return
         }
-
-        showNextQuestion()
+        
+        currentQuestionIndex += 1
+        showQuestion()
+    }
+    
+    func showQuestion() {
+        let viewModel = convert(model: currentQuestion())
+        updateView(with: viewModel)
     }
     
     func showResults() {
-        // показываем финальный результат
+        let viewModel = QuizResultsViewModel(
+            title: "Раунд окончен!",
+            message: "Ваш результат: \(correctAnswers)/\(questions.count)",
+            buttonTitle: "Сыграть ещё раз"
+        )
+        updateView(with: viewModel)
     }
     
-    func showNextQuestion() {
-        currentQuestionIndex += 1
-        let viewModel = convert(model: currentQuestion())
-        updateView(with: viewModel)
+    func startQuiz() {
+        resetResults()
+        showQuestion()
     }
 }
 
 // MARK: -
 
 private extension MovieQuizViewController {
+    func updateView(with viewModel: QuizResultsViewModel) {
+        let alert = UIAlertController(
+            title: viewModel.title,
+            message: viewModel.message,
+            preferredStyle: .alert
+        )
+        let action = UIAlertAction(title: viewModel.buttonTitle, style: .default) { _ in
+            self.startQuiz()
+        }
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+    
     func updateView(with viewModel: QuizStepViewModel) {
         counterLabel.text = viewModel.questionNumber
         questionLabel.text = viewModel.question
@@ -92,6 +116,11 @@ private extension MovieQuizViewController {
         movieImageView.layer.borderColor = color.cgColor
     }
     
+    func updateButtons(isEnabled: Bool) {
+        noButton.isEnabled = isEnabled
+        yesButton.isEnabled = isEnabled
+    }
+    
     func setupView() {
         movieImageView.layer.masksToBounds = true
         movieImageView.layer.borderWidth = 8
@@ -99,7 +128,7 @@ private extension MovieQuizViewController {
     }
 }
 
-// MARK: - Data
+// MARK: - Data/Model
 
 private extension MovieQuizViewController {
     func isCorrectAnswer(_ answer: AnswerResult) -> Bool {
@@ -122,56 +151,61 @@ private extension MovieQuizViewController {
         )
     }
     
-    func loadData() {
-        questions = [
+    func resetResults() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+    }
+    
+    func loadQuestions() -> [QuizQuestion] {
+        [
             QuizQuestion(
                 imageName: "The Godfather",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 9,2
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "The Dark Knight",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 9
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "Kill Bill",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8,1
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "The Avengers",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "Deadpool",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 8
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "The Green Knight",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 6,6
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .yes
             ),
             QuizQuestion(
                 imageName: "Old",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,8
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .no
             ),
             QuizQuestion(
                 imageName: "The Ice Age Adventures of Buck Wild",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 4,3
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .no
             ),
             QuizQuestion(
                 imageName: "Tesla",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,1
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .no
             ),
             QuizQuestion(
                 imageName: "Vivarium",
-                text: "Рейтинг этого фильма больше чем 6?", // NOTE: 5,8
+                text: "Рейтинг этого фильма больше чем 6?",
                 correctAnswer: .no
             )
         ]
@@ -179,10 +213,6 @@ private extension MovieQuizViewController {
 }
 
 // MARK: - Model
-
-// NOTE: Спринт 4/17: 4 → Тема 3/4: Реализация логики по макету → Урок 2/6
-// Для своего первого проекта мы будем пользоваться только файлом MovieQuizViewController.swift — весь код напишем в нём.
-// Если понадобится создать дополнительные классы или структуры, их также стоит расположить внутри этого файла.
 
 private enum AnswerResult {
     case yes, no
@@ -198,4 +228,10 @@ private struct QuizStepViewModel {
     let questionNumber: String
     let question: String
     let image: UIImage
+}
+
+private struct QuizResultsViewModel {
+    let title: String
+    let message: String
+    let buttonTitle: String
 }
