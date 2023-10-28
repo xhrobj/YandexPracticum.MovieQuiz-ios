@@ -3,27 +3,62 @@ import UIKit
 final class MovieQuizViewController: UIViewController {
     
     private var questions: [QuizQuestion] = []
+    private var currentQuestionIndex = 0
+    private var correctAnswers = 0
     
     // MARK: - @IBOutlets
     
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var moviePosterImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
-    
-    
-    // MARK: - @IBActions
-    
-    @IBAction private func noButtonTapped() {}
-    @IBAction private func yesButtonTapped() {}
-    
-    // MARK: - View Lifecycle
+
+    // MARK: - View lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         loadData()
+        showNextQuestion()
     }
 }
+
+// MARK: - @IBActions
+
+private extension MovieQuizViewController {
+    @IBAction func noButtonTapped() {
+        print("no")
+    }
+    
+    @IBAction func yesButtonTapped() {
+        print("yes")
+    }
+}
+
+// MARK: - Private methods
+
+private extension MovieQuizViewController {
+    func showNextQuestion() {
+        let viewModel = convert(model: questions[currentQuestionIndex])
+        updateView(with: viewModel)
+    }
+    
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        QuizStepViewModel(
+            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
+            question: model.question,
+            image: UIImage(named: model.image) ?? UIImage()
+        )
+    }
+    
+    func updateView(with viewModel: QuizStepViewModel) {
+        counterLabel.text = viewModel.questionNumber
+        moviePosterImageView.image = viewModel.image
+        questionLabel.text = viewModel.question
+    }
+    
+}
+
+// MARK: - Data
 
 private extension MovieQuizViewController {
     func loadData() {
@@ -82,6 +117,8 @@ private extension MovieQuizViewController {
     }
 }
 
+// MARK: - Model
+
 // NOTE: Спринт 4/17: 4 → Тема 3/4: Реализация логики по макету → Урок 2/6
 // Для своего первого проекта мы будем пользоваться только файлом MovieQuizViewController.swift — весь код напишем в нём.
 // Если понадобится создать дополнительные классы или структуры, их также стоит расположить внутри этого файла.
@@ -90,6 +127,12 @@ struct QuizQuestion {
     let image: String // совпадает с названием картинки афиши фильма в Assets
     let question: String // строка с вопросом о рейтинге фильма
     let isCorrectAnswer: Bool // правильный ответ на вопрос
+}
+
+struct QuizStepViewModel {
+    let questionNumber: String
+    let question: String
+    let image: UIImage
 }
 
 /*
