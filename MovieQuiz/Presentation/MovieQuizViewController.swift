@@ -44,7 +44,9 @@ private extension MovieQuizViewController {
 private extension MovieQuizViewController {
     func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResult) {
         let isCorrect = isCorrectAnswer(answer)
-        correctAnswers += isCorrect ? 1 : 0
+        if isCorrect {
+            correctAnswers += 1
+        }
         
         showAnswerResult(isCorrect)
 
@@ -80,7 +82,8 @@ private extension MovieQuizViewController {
         let viewModel = QuizResultsViewModel(
             title: "Раунд окончен!",
             message: "Ваш результат: \(correctAnswers)/\(questions.count)",
-            buttonTitle: "Сыграть ещё раз"
+            buttonTitle: "Сыграть ещё раз",
+            imageBorder: .none
         )
         updateView(with: viewModel)
     }
@@ -105,6 +108,7 @@ private extension MovieQuizViewController {
         }
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
     }
     
     func updateView(with viewModel: QuizAnswerViewModel) {
@@ -266,4 +270,5 @@ private struct QuizResultsViewModel {
     let title: String
     let message: String
     let buttonTitle: String
+    let imageBorder: MovieImageBorderType
 }
