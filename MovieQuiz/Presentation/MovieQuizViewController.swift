@@ -243,14 +243,14 @@ private enum AnswerResult {
     case yes, no
 }
 
+private enum MovieImageBorderType {
+    case none, correct, wrong
+}
+
 private struct QuizQuestion {
     let imageName: String // NOTE: совпадает с названием картинки афиши фильма в Assets
     let text: String
     let correctAnswer: AnswerResult
-}
-
-private enum MovieImageBorderType {
-    case none, correct, wrong
 }
 
 private struct QuizStepViewModel {
