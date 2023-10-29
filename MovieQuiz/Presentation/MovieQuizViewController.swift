@@ -1,6 +1,8 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
+    private static let nextQuestionDelayInSeconds: TimeInterval = 1
+    
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     
@@ -42,21 +44,15 @@ private extension MovieQuizViewController {
 private extension MovieQuizViewController {
     func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResult) {
         let isCorrect = isCorrectAnswer(answer)
-        correctAnswers += isCorrect ? 1 : 0
+        if isCorrect {
+            correctAnswers += 1
+        }
         
         showAnswerResult(isCorrect)
-        
-        updateButtons(isEnabled: false)
-        let delayInSeconds: Double = 1
-        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) {
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.nextQuestionDelayInSeconds) {
             self.showNextQuestionOrResults()
-            self.updateButtons(isEnabled: true)
         }
-    }
-    
-    func showAnswerResult(_ isCorrectAnswer: Bool) {
-        let borderColor: UIColor = isCorrectAnswer ? .ypGreen : .ypRed
-        updateMovieImageViewBorder(with: borderColor)
     }
     
     func showNextQuestionOrResults() {
@@ -73,18 +69,27 @@ private extension MovieQuizViewController {
         let viewModel = convert(model: currentQuestion())
         updateView(with: viewModel)
     }
-    
+
+    func showAnswerResult(_ isCorrectAnswer: Bool) {
+        let viewModel = QuizAnswerViewModel(
+            imageBorder: isCorrectAnswer ? .correct : .wrong,
+            buttonsEnabled: false
+        )
+        updateView(with: viewModel)
+    }
+
     func showResults() {
         let viewModel = QuizResultsViewModel(
             title: "Раунд окончен!",
             message: "Ваш результат: \(correctAnswers)/\(questions.count)",
-            buttonTitle: "Сыграть ещё раз"
+            buttonTitle: "Сыграть ещё раз",
+            imageBorder: .none
         )
         updateView(with: viewModel)
     }
     
     func startQuiz() {
-        resetResults()
+        resetCounters()
         showQuestion()
     }
 }
@@ -103,16 +108,34 @@ private extension MovieQuizViewController {
         }
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+    }
+    
+    func updateView(with viewModel: QuizAnswerViewModel) {
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+        updateButtons(isEnabled: viewModel.buttonsEnabled)
     }
     
     func updateView(with viewModel: QuizStepViewModel) {
         counterLabel.text = viewModel.questionNumber
         questionLabel.text = viewModel.question
         movieImageView.image = viewModel.image
-        updateMovieImageViewBorder(with: .clear)
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+        updateButtons(isEnabled: viewModel.buttonsEnabled)
     }
-    
-    func updateMovieImageViewBorder(with color: UIColor) {
+
+    func updateMovieImageViewBorder(with type: MovieImageBorderType) {
+        let color: UIColor
+        
+        switch type {
+        case .none:
+            color = .clear
+        case .correct:
+            color = .ypGreen
+        case .wrong:
+            color = .ypRed
+        }
+        
         movieImageView.layer.borderColor = color.cgColor
     }
     
@@ -147,11 +170,13 @@ private extension MovieQuizViewController {
         QuizStepViewModel(
             questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
             question: model.text,
-            image: UIImage(named: model.imageName) ?? UIImage()
+            image: UIImage(named: model.imageName) ?? UIImage(),
+            imageBorder: .none,
+            buttonsEnabled: true
         )
     }
     
-    func resetResults() {
+    func resetCounters() {
         currentQuestionIndex = 0
         correctAnswers = 0
     }
@@ -224,14 +249,26 @@ private struct QuizQuestion {
     let correctAnswer: AnswerResult
 }
 
+private enum MovieImageBorderType {
+    case none, correct, wrong
+}
+
 private struct QuizStepViewModel {
     let questionNumber: String
     let question: String
     let image: UIImage
+    let imageBorder: MovieImageBorderType
+    let buttonsEnabled: Bool
+}
+
+private struct QuizAnswerViewModel {
+    let imageBorder: MovieImageBorderType
+    let buttonsEnabled: Bool
 }
 
 private struct QuizResultsViewModel {
     let title: String
     let message: String
     let buttonTitle: String
+    let imageBorder: MovieImageBorderType
 }
