@@ -1,72 +1,274 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    // MARK: - Lifecycle
+    private static let nextQuestionDelayInSeconds: TimeInterval = 1
+    
+    private var currentQuestionIndex = 0
+    private var correctAnswers = 0
+    
+    private lazy var questions: [QuizQuestion] = {
+        loadQuestions()
+    }()
+    
+    // MARK: - @IBOutlets
+    
+    @IBOutlet private weak var counterLabel: UILabel!
+    @IBOutlet private weak var movieImageView: UIImageView!
+    @IBOutlet private weak var questionLabel: UILabel!
+    @IBOutlet weak var noButton: UIButton!
+    @IBOutlet weak var yesButton: UIButton!
+    
+    // MARK: - View lifecycle
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupView()
+        startQuiz()
     }
 }
 
-/*
- Mock-данные
- 
- 
- Картинка: The Godfather
- Настоящий рейтинг: 9,2
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+// MARK: - @IBActions
 
+private extension MovieQuizViewController {
+    @IBAction func noButtonTapped() {
+        handleAnswerAndMoveNextStep(userAnswer: .no)
+    }
+    
+    @IBAction func yesButtonTapped() {
+        handleAnswerAndMoveNextStep(userAnswer: .yes)
+    }
+}
 
- Картинка: The Dark Knight
- Настоящий рейтинг: 9
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+// MARK: - Private methods
 
+private extension MovieQuizViewController {
+    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResult) {
+        let isCorrect = isCorrectAnswer(answer)
+        if isCorrect {
+            correctAnswers += 1
+        }
+        
+        showAnswerResult(isCorrect)
 
- Картинка: Kill Bill
- Настоящий рейтинг: 8,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.nextQuestionDelayInSeconds) {
+            self.showNextQuestionOrResults()
+        }
+    }
+    
+    func showNextQuestionOrResults() {
+        guard !isLastQuestion() else {
+            showResults()
+            return
+        }
+        
+        currentQuestionIndex += 1
+        showQuestion()
+    }
+    
+    func showQuestion() {
+        let viewModel = convert(model: currentQuestion())
+        updateView(with: viewModel)
+    }
 
+    func showAnswerResult(_ isCorrectAnswer: Bool) {
+        let viewModel = QuizAnswerViewModel(
+            imageBorder: isCorrectAnswer ? .correct : .wrong,
+            buttonsEnabled: false
+        )
+        updateView(with: viewModel)
+    }
 
- Картинка: The Avengers
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+    func showResults() {
+        let viewModel = QuizResultsViewModel(
+            title: "Раунд окончен!",
+            message: "Ваш результат: \(correctAnswers)/\(questions.count)",
+            buttonTitle: "Сыграть ещё раз",
+            imageBorder: .none
+        )
+        updateView(with: viewModel)
+    }
+    
+    func startQuiz() {
+        resetCounters()
+        showQuestion()
+    }
+}
 
+// MARK: -
 
- Картинка: Deadpool
- Настоящий рейтинг: 8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+private extension MovieQuizViewController {
+    func updateView(with viewModel: QuizResultsViewModel) {
+        let alert = UIAlertController(
+            title: viewModel.title,
+            message: viewModel.message,
+            preferredStyle: .alert
+        )
+        let action = UIAlertAction(title: viewModel.buttonTitle, style: .default) { _ in
+            self.startQuiz()
+        }
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+    }
+    
+    func updateView(with viewModel: QuizAnswerViewModel) {
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+        updateButtons(isEnabled: viewModel.buttonsEnabled)
+    }
+    
+    func updateView(with viewModel: QuizStepViewModel) {
+        counterLabel.text = viewModel.questionNumber
+        questionLabel.text = viewModel.question
+        movieImageView.image = viewModel.image
+        updateMovieImageViewBorder(with: viewModel.imageBorder)
+        updateButtons(isEnabled: viewModel.buttonsEnabled)
+    }
 
+    func updateMovieImageViewBorder(with type: MovieImageBorderType) {
+        let color: UIColor
+        
+        switch type {
+        case .none:
+            color = .clear
+        case .correct:
+            color = .ypGreen
+        case .wrong:
+            color = .ypRed
+        }
+        
+        movieImageView.layer.borderColor = color.cgColor
+    }
+    
+    func updateButtons(isEnabled: Bool) {
+        noButton.isEnabled = isEnabled
+        yesButton.isEnabled = isEnabled
+    }
+    
+    func setupView() {
+        movieImageView.layer.masksToBounds = true
+        movieImageView.layer.borderWidth = 8
+        movieImageView.layer.cornerRadius = 20
+    }
+}
 
- Картинка: The Green Knight
- Настоящий рейтинг: 6,6
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: ДА
+// MARK: - Data/Model
 
+private extension MovieQuizViewController {
+    func isCorrectAnswer(_ answer: AnswerResult) -> Bool {
+        currentQuestion().correctAnswer == answer
+    }
+    
+    func isLastQuestion() -> Bool {
+        currentQuestionIndex + 1 >= questions.count
+    }
+    
+    func currentQuestion() -> QuizQuestion {
+        questions[currentQuestionIndex]
+    }
+    
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        QuizStepViewModel(
+            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
+            question: model.text,
+            image: UIImage(named: model.imageName) ?? UIImage(),
+            imageBorder: .none,
+            buttonsEnabled: true
+        )
+    }
+    
+    func resetCounters() {
+        currentQuestionIndex = 0
+        correctAnswers = 0
+    }
+    
+    func loadQuestions() -> [QuizQuestion] {
+        [
+            QuizQuestion(
+                imageName: "The Godfather",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "The Dark Knight",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "Kill Bill",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "The Avengers",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "Deadpool",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "The Green Knight",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .yes
+            ),
+            QuizQuestion(
+                imageName: "Old",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .no
+            ),
+            QuizQuestion(
+                imageName: "The Ice Age Adventures of Buck Wild",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .no
+            ),
+            QuizQuestion(
+                imageName: "Tesla",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .no
+            ),
+            QuizQuestion(
+                imageName: "Vivarium",
+                text: "Рейтинг этого фильма больше чем 6?",
+                correctAnswer: .no
+            )
+        ]
+    }
+}
 
- Картинка: Old
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
+// MARK: - Model
 
+private enum AnswerResult {
+    case yes, no
+}
 
- Картинка: The Ice Age Adventures of Buck Wild
- Настоящий рейтинг: 4,3
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
+private enum MovieImageBorderType {
+    case none, correct, wrong
+}
 
+private struct QuizQuestion {
+    let imageName: String // NOTE: совпадает с названием картинки афиши фильма в Assets
+    let text: String
+    let correctAnswer: AnswerResult
+}
 
- Картинка: Tesla
- Настоящий рейтинг: 5,1
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
+private struct QuizStepViewModel {
+    let questionNumber: String
+    let question: String
+    let image: UIImage
+    let imageBorder: MovieImageBorderType
+    let buttonsEnabled: Bool
+}
 
+private struct QuizAnswerViewModel {
+    let imageBorder: MovieImageBorderType
+    let buttonsEnabled: Bool
+}
 
- Картинка: Vivarium
- Настоящий рейтинг: 5,8
- Вопрос: Рейтинг этого фильма больше чем 6?
- Ответ: НЕТ
- */
+private struct QuizResultsViewModel {
+    let title: String
+    let message: String
+    let buttonTitle: String
+    let imageBorder: MovieImageBorderType
+}
