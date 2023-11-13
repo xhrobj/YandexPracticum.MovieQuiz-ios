@@ -50,8 +50,8 @@ private extension MovieQuizViewController {
         
         showAnswerResult(isCorrect)
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.nextQuestionDelayInSeconds) {
-            self.showNextQuestionOrResults()
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.nextQuestionDelayInSeconds) { [weak self] in
+            self?.showNextQuestionOrResults()
         }
     }
     
@@ -103,8 +103,8 @@ private extension MovieQuizViewController {
             message: viewModel.message,
             preferredStyle: .alert
         )
-        let action = UIAlertAction(title: viewModel.buttonTitle, style: .default) { _ in
-            self.startQuiz()
+        let action = UIAlertAction(title: viewModel.buttonTitle, style: .default) { [weak self] _ in
+            self?.startQuiz()
         }
         alert.addAction(action)
         present(alert, animated: true, completion: nil)
