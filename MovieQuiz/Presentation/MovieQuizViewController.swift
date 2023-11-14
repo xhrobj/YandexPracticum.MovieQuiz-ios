@@ -3,7 +3,7 @@ import UIKit
 final class MovieQuizViewController: UIViewController {
     private static let nextQuestionDelayInSeconds: TimeInterval = 1
     
-    private let questionFactory = QuestionFactory()
+    private let questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private let questionsAmount = 10
     
     private var currentQuestion: QuizQuestion?

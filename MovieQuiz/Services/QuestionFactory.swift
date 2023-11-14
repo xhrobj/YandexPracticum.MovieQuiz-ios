@@ -5,7 +5,7 @@
 //  Created by Mikhail Eliseev on 13.11.2023.
 //
 
-class QuestionFactory {
+class QuestionFactory: QuestionFactoryProtocol {
     
     private lazy var questions: [QuizQuestion] = {
         loadQuestions()
