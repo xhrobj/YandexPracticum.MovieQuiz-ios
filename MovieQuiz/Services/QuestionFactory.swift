@@ -11,11 +11,6 @@ class QuestionFactory {
         loadQuestions()
     }()
     
-    // FIXME:
-    func fetchQuestions() -> [QuizQuestion] {
-        questions
-    }
-    
     func requestNextQuestion() -> QuizQuestion? {
         guard let index = (0..<questions.count).randomElement() else {
             return nil

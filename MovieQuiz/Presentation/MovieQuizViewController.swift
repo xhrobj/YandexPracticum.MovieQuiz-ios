@@ -3,12 +3,12 @@ import UIKit
 final class MovieQuizViewController: UIViewController {
     private static let nextQuestionDelayInSeconds: TimeInterval = 1
     
-    private var currentQuestionIndex = 0
-    private var correctAnswers = 0
+    private let questionFactory = QuestionFactory()
+    private let questionsAmount = 10
     
-    private lazy var questions: [QuizQuestion] = {
-        QuestionFactory().fetchQuestions()
-    }()
+    private var currentQuestion: QuizQuestion?
+    private var displayedQuestionsCount = 0
+    private var correctAnswers = 0
     
     // MARK: - @IBOutlets
     
@@ -61,12 +61,15 @@ private extension MovieQuizViewController {
             return
         }
         
-        currentQuestionIndex += 1
+        fetchNextQuestion()
         showQuestion()
     }
     
     func showQuestion() {
-        let viewModel = convert(model: currentQuestion())
+        guard let currentQuestion = currentQuestion else { return }
+        
+        displayedQuestionsCount += 1
+        let viewModel = convert(model: currentQuestion)
         updateView(with: viewModel)
     }
 
@@ -81,7 +84,7 @@ private extension MovieQuizViewController {
     func showResults() {
         let viewModel = QuizResultsViewModel(
             title: "Раунд окончен!",
-            message: "Ваш результат: \(correctAnswers)/\(questions.count)",
+            message: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
             buttonTitle: "Сыграть ещё раз",
             imageBorder: .none
         )
@@ -90,6 +93,7 @@ private extension MovieQuizViewController {
     
     func startQuiz() {
         resetCounters()
+        fetchNextQuestion()
         showQuestion()
     }
 }
@@ -154,21 +158,21 @@ private extension MovieQuizViewController {
 // MARK: - Data/Model
 
 private extension MovieQuizViewController {
+    func fetchNextQuestion() {
+        currentQuestion = questionFactory.requestNextQuestion()
+    }
+    
     func isCorrectAnswer(_ answer: AnswerResultType) -> Bool {
-        currentQuestion().correctAnswer == answer
+        currentQuestion?.correctAnswer == answer
     }
     
     func isLastQuestion() -> Bool {
-        currentQuestionIndex + 1 >= questions.count
-    }
-    
-    func currentQuestion() -> QuizQuestion {
-        questions[currentQuestionIndex]
+        displayedQuestionsCount == questionsAmount
     }
     
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
-            questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)",
+            questionNumber: "\(displayedQuestionsCount)/\(questionsAmount)",
             question: model.text,
             image: UIImage(named: model.imageName) ?? UIImage(),
             imageBorder: .none,
@@ -177,7 +181,7 @@ private extension MovieQuizViewController {
     }
     
     func resetCounters() {
-        currentQuestionIndex = 0
+        displayedQuestionsCount = 0
         correctAnswers = 0
     }
 }
