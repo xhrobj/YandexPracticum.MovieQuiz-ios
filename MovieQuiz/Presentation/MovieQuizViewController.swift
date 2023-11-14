@@ -7,7 +7,7 @@ final class MovieQuizViewController: UIViewController {
     private var correctAnswers = 0
     
     private lazy var questions: [QuizQuestion] = {
-        loadQuestions()
+        QuestionFactory().fetchQuestions()
     }()
     
     // MARK: - @IBOutlets
@@ -42,7 +42,7 @@ private extension MovieQuizViewController {
 // MARK: - Private methods
 
 private extension MovieQuizViewController {
-    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResult) {
+    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResultType) {
         let isCorrect = isCorrectAnswer(answer)
         if isCorrect {
             correctAnswers += 1
@@ -154,7 +154,7 @@ private extension MovieQuizViewController {
 // MARK: - Data/Model
 
 private extension MovieQuizViewController {
-    func isCorrectAnswer(_ answer: AnswerResult) -> Bool {
+    func isCorrectAnswer(_ answer: AnswerResultType) -> Bool {
         currentQuestion().correctAnswer == answer
     }
     
@@ -180,95 +180,4 @@ private extension MovieQuizViewController {
         currentQuestionIndex = 0
         correctAnswers = 0
     }
-    
-    func loadQuestions() -> [QuizQuestion] {
-        [
-            QuizQuestion(
-                imageName: "The Godfather",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "The Dark Knight",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "Kill Bill",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "The Avengers",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "Deadpool",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "The Green Knight",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .yes
-            ),
-            QuizQuestion(
-                imageName: "Old",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .no
-            ),
-            QuizQuestion(
-                imageName: "The Ice Age Adventures of Buck Wild",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .no
-            ),
-            QuizQuestion(
-                imageName: "Tesla",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .no
-            ),
-            QuizQuestion(
-                imageName: "Vivarium",
-                text: "Рейтинг этого фильма больше чем 6?",
-                correctAnswer: .no
-            )
-        ]
-    }
-}
-
-// MARK: - Model
-
-private enum AnswerResult {
-    case yes, no
-}
-
-private enum MovieImageBorderType {
-    case none, correct, wrong
-}
-
-private struct QuizQuestion {
-    let imageName: String // NOTE: совпадает с названием картинки афиши фильма в Assets
-    let text: String
-    let correctAnswer: AnswerResult
-}
-
-private struct QuizStepViewModel {
-    let questionNumber: String
-    let question: String
-    let image: UIImage
-    let imageBorder: MovieImageBorderType
-    let buttonsEnabled: Bool
-}
-
-private struct QuizAnswerViewModel {
-    let imageBorder: MovieImageBorderType
-    let buttonsEnabled: Bool
-}
-
-private struct QuizResultsViewModel {
-    let title: String
-    let message: String
-    let buttonTitle: String
-    let imageBorder: MovieImageBorderType
 }
