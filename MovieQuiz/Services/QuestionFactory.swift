@@ -5,18 +5,27 @@
 //  Created by Mikhail Eliseev on 13.11.2023.
 //
 
+import Foundation
+
 class QuestionFactory: QuestionFactoryProtocol {
+    weak var delegate: QuestionFactoryDelegate?
     
     private lazy var questions: [QuizQuestion] = {
         loadQuestions()
     }()
     
-    func requestNextQuestion() -> QuizQuestion? {
+    func requestNextQuestion() {
         guard let index = (0..<questions.count).randomElement() else {
-            return nil
+            delegate?.didReceiveNextQuestion(nil)
+            return
         }
         
-        return questions[safe: index]
+        let delayInSeconds: TimeInterval = 2
+        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) { [weak self] in
+            guard let self else { return }
+            
+            self.delegate?.didReceiveNextQuestion(self.questions[safe: index])
+        }
     }
 }
 

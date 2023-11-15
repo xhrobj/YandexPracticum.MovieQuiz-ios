@@ -3,9 +3,9 @@ import UIKit
 final class MovieQuizViewController: UIViewController {
     private static let nextQuestionDelayInSeconds: TimeInterval = 1
     
-    private let questionFactory: QuestionFactoryProtocol = QuestionFactory()
     private let questionsAmount = 10
     
+    private var questionFactory: QuestionFactoryProtocol?
     private var currentQuestion: QuizQuestion?
     private var displayedQuestionsCount = 0
     private var correctAnswers = 0
@@ -22,7 +22,10 @@ final class MovieQuizViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        configureQuestionFactory()
         setupView()
+        
         startQuiz()
     }
 }
@@ -62,7 +65,6 @@ private extension MovieQuizViewController {
         }
         
         fetchNextQuestion()
-        showQuestion()
     }
     
     func showQuestion() {
@@ -91,10 +93,21 @@ private extension MovieQuizViewController {
         updateView(with: viewModel)
     }
     
+    func showStartState() {
+        let viewModel = QuizStepViewModel(
+            questionNumber: "",
+            question: "",
+            image: UIImage(),
+            imageBorder: .none,
+            buttonsEnabled: false
+        )
+        updateView(with: viewModel)
+    }
+    
     func startQuiz() {
         resetCounters()
+        showStartState()
         fetchNextQuestion()
-        showQuestion()
     }
 }
 
@@ -152,6 +165,12 @@ private extension MovieQuizViewController {
         movieImageView.layer.masksToBounds = true
         movieImageView.layer.borderWidth = 8
         movieImageView.layer.cornerRadius = 20
+        movieImageView.image = nil
+    }
+    
+    func configureQuestionFactory() {
+        questionFactory = QuestionFactory()
+        questionFactory?.delegate = self
     }
 }
 
@@ -159,7 +178,7 @@ private extension MovieQuizViewController {
 
 private extension MovieQuizViewController {
     func fetchNextQuestion() {
-        currentQuestion = questionFactory.requestNextQuestion()
+        questionFactory?.requestNextQuestion()
     }
     
     func isCorrectAnswer(_ answer: AnswerResultType) -> Bool {
@@ -183,5 +202,17 @@ private extension MovieQuizViewController {
     func resetCounters() {
         displayedQuestionsCount = 0
         correctAnswers = 0
+    }
+}
+
+// MARK: - <QuestionFactoryDelegate>
+
+extension MovieQuizViewController: QuestionFactoryDelegate {
+    func didReceiveNextQuestion(_ question: QuizQuestion?) {
+        currentQuestion = question
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.showQuestion()
+        }
     }
 }
