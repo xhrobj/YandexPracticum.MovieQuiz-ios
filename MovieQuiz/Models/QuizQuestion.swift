@@ -6,7 +6,7 @@
 //
 
 struct QuizQuestion {
-    let imageName: String // NOTE: совпадает с названием картинки афиши фильма в Assets
+    let imageName: String
     let text: String
     let correctAnswer: AnswerResultType
 }

@@ -10,6 +10,10 @@ final class MovieQuizViewController: UIViewController {
     private var displayedQuestionsCount = 0
     private var correctAnswers = 0
     
+    private lazy var alertPresenter: AlertPresenterProtocol = {
+        AlertPresenter()
+    }()
+    
     // MARK: - @IBOutlets
     
     @IBOutlet private weak var counterLabel: UILabel!
@@ -115,16 +119,14 @@ private extension MovieQuizViewController {
 
 private extension MovieQuizViewController {
     func updateView(with viewModel: QuizResultsViewModel) {
-        let alert = UIAlertController(
+        let alertModel = AlertModel(
             title: viewModel.title,
             message: viewModel.message,
-            preferredStyle: .alert
+            buttonTitle: viewModel.buttonTitle,
+            buttonHandler: { [weak self] in self?.startQuiz() }
         )
-        let action = UIAlertAction(title: viewModel.buttonTitle, style: .default) { [weak self] _ in
-            self?.startQuiz()
-        }
-        alert.addAction(action)
-        present(alert, animated: true, completion: nil)
+        alertPresenter.present(alertModel, for: self)
+        
         updateMovieImageViewBorder(with: viewModel.imageBorder)
     }
     

@@ -20,7 +20,7 @@ class QuestionFactory: QuestionFactoryProtocol {
             return
         }
         
-        let delayInSeconds: TimeInterval = 2
+        let delayInSeconds: TimeInterval = 0
         DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) { [weak self] in
             guard let self else { return }
             
