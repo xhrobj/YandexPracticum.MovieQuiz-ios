@@ -7,7 +7,7 @@
 
 import Foundation
 
-class QuestionFactory: QuestionFactoryProtocol {
+final class QuestionFactory: QuestionFactoryProtocol {
     weak var delegate: QuestionFactoryDelegate?
     
     private lazy var questions: [QuizQuestion] = {
@@ -20,7 +20,7 @@ class QuestionFactory: QuestionFactoryProtocol {
             return
         }
         
-        let delayInSeconds: TimeInterval = 0
+        let delayInSeconds: TimeInterval = 0 // NOTE: для имитации задержки сети
         DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) { [weak self] in
             guard let self else { return }
             

@@ -10,6 +10,10 @@ final class MovieQuizViewController: UIViewController {
     private var displayedQuestionsCount = 0
     private var correctAnswers = 0
     
+    private lazy var statisticsService: StatisticsServiceProtocol = {
+        StatisticsService()
+    }()
+    
     private lazy var alertPresenter: AlertPresenterProtocol = {
         AlertPresenter()
     }()
@@ -28,7 +32,7 @@ final class MovieQuizViewController: UIViewController {
         super.viewDidLoad()
         
         configureQuestionFactory()
-        setupView()
+        configureView()
         
         startQuiz()
     }
@@ -64,6 +68,7 @@ private extension MovieQuizViewController {
     
     func showNextQuestionOrResults() {
         guard !isLastQuestion() else {
+            saveResults()
             showResults()
             return
         }
@@ -76,7 +81,7 @@ private extension MovieQuizViewController {
         
         displayedQuestionsCount += 1
         let viewModel = convert(model: currentQuestion)
-        updateView(with: viewModel)
+        configureView(with: viewModel)
     }
 
     func showAnswerResult(_ isCorrectAnswer: Bool) {
@@ -84,17 +89,25 @@ private extension MovieQuizViewController {
             imageBorder: isCorrectAnswer ? .correct : .wrong,
             buttonsEnabled: false
         )
-        updateView(with: viewModel)
+        configureView(with: viewModel)
     }
 
     func showResults() {
+        let bestGame = statisticsService.bestGame
+        let message = """
+            Ваш результат: \(correctAnswers)/\(questionsAmount)
+            Количество сыгранных квизов: \(statisticsService.gamesCount)
+            Рекорд: \(bestGame.correctAnswers)/\(bestGame.totalAnswers) (\(bestGame.date.dateTimeString))
+            Средняя точность: \(String(format: "%.2f", statisticsService.totalAccuracy))%
+            """
+        
         let viewModel = QuizResultsViewModel(
-            title: "Раунд окончен!",
-            message: "Ваш результат: \(correctAnswers)/\(questionsAmount)",
+            title: "Этот раунд окончен!",
+            message: message,
             buttonTitle: "Сыграть ещё раз",
             imageBorder: .none
         )
-        updateView(with: viewModel)
+        configureView(with: viewModel)
     }
     
     func showStartState() {
@@ -105,7 +118,7 @@ private extension MovieQuizViewController {
             imageBorder: .none,
             buttonsEnabled: false
         )
-        updateView(with: viewModel)
+        configureView(with: viewModel)
     }
     
     func startQuiz() {
@@ -118,7 +131,7 @@ private extension MovieQuizViewController {
 // MARK: -
 
 private extension MovieQuizViewController {
-    func updateView(with viewModel: QuizResultsViewModel) {
+    func configureView(with viewModel: QuizResultsViewModel) {
         let alertModel = AlertModel(
             title: viewModel.title,
             message: viewModel.message,
@@ -127,23 +140,23 @@ private extension MovieQuizViewController {
         )
         alertPresenter.present(alertModel, for: self)
         
-        updateMovieImageViewBorder(with: viewModel.imageBorder)
+        configureMovieImageViewBorder(with: viewModel.imageBorder)
     }
     
-    func updateView(with viewModel: QuizAnswerViewModel) {
-        updateMovieImageViewBorder(with: viewModel.imageBorder)
-        updateButtons(isEnabled: viewModel.buttonsEnabled)
+    func configureView(with viewModel: QuizAnswerViewModel) {
+        configureMovieImageViewBorder(with: viewModel.imageBorder)
+        configureButtons(isEnabled: viewModel.buttonsEnabled)
     }
     
-    func updateView(with viewModel: QuizStepViewModel) {
+    func configureView(with viewModel: QuizStepViewModel) {
         counterLabel.text = viewModel.questionNumber
         questionLabel.text = viewModel.question
         movieImageView.image = viewModel.image
-        updateMovieImageViewBorder(with: viewModel.imageBorder)
-        updateButtons(isEnabled: viewModel.buttonsEnabled)
+        configureMovieImageViewBorder(with: viewModel.imageBorder)
+        configureButtons(isEnabled: viewModel.buttonsEnabled)
     }
 
-    func updateMovieImageViewBorder(with type: MovieImageBorderType) {
+    func configureMovieImageViewBorder(with type: MovieImageBorderType) {
         let color: UIColor
         
         switch type {
@@ -158,12 +171,12 @@ private extension MovieQuizViewController {
         movieImageView.layer.borderColor = color.cgColor
     }
     
-    func updateButtons(isEnabled: Bool) {
+    func configureButtons(isEnabled: Bool) {
         noButton.isEnabled = isEnabled
         yesButton.isEnabled = isEnabled
     }
     
-    func setupView() {
+    func configureView() {
         movieImageView.layer.masksToBounds = true
         movieImageView.layer.borderWidth = 8
         movieImageView.layer.cornerRadius = 20
@@ -179,6 +192,10 @@ private extension MovieQuizViewController {
 // MARK: - Data/Model
 
 private extension MovieQuizViewController {
+    func saveResults() {
+        statisticsService.storeGameResult(totalAnswers: questionsAmount, correctAnswers: correctAnswers)
+    }
+
     func fetchNextQuestion() {
         questionFactory?.requestNextQuestion()
     }
