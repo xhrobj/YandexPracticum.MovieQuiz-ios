@@ -10,22 +10,39 @@ import Foundation
 final class QuestionFactory: QuestionFactoryProtocol {
     weak var delegate: QuestionFactoryDelegate?
     
-    private lazy var questions: [QuizQuestion] = {
-        loadQuestions()
-    }()
+    private var indexSet = Set<Int>()
+    
+    private lazy var questions: [QuizQuestion] = loadQuestions()
     
     func requestNextQuestion() {
-        guard let index = (0..<questions.count).randomElement() else {
+        guard let index = fetchNextIndex() else {
             delegate?.didReceiveNextQuestion(nil)
             return
         }
-        
-        let delayInSeconds: TimeInterval = 0 // NOTE: для имитации задержки сети
-        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) { [weak self] in
-            guard let self else { return }
-            
-            self.delegate?.didReceiveNextQuestion(self.questions[safe: index])
+
+        self.delegate?.didReceiveNextQuestion(self.questions[safe: index])
+    }
+}
+
+// MARK: - Private methods
+
+private extension QuestionFactory {
+    func resetIndexSet() {
+        indexSet = Set(0..<questions.count)
+    }
+    
+    func fetchNextIndex() -> Int? {
+        if indexSet.isEmpty {
+            resetIndexSet()
         }
+        
+        guard let index = indexSet.randomElement() else {
+            return nil
+        }
+        
+        indexSet.remove(index)
+        
+        return index
     }
 }
 

@@ -10,13 +10,13 @@ import Foundation
 final class StatisticsService: StatisticsServiceProtocol {
     private let userDefaults = UserDefaults.standard
 
-    var totalAccuracy: Double {
+    var averageAccuracyPercentage: Double {
         get {
             let savedTotalAnswers = totalAnswers
             
             guard savedTotalAnswers != 0 else { return 0 }
             
-            return Double(totalCorrectAnswers) / Double(savedTotalAnswers)
+            return Double(totalCorrectAnswers) / Double(savedTotalAnswers) * 100
         }
     }
 
@@ -63,6 +63,13 @@ final class StatisticsService: StatisticsServiceProtocol {
         self.totalAnswers += totalAnswers
         totalCorrectAnswers += correctAnswers
         gamesCount += 1
+    }
+    
+    func reset() {
+        let keys: [Keys] = [.totalAnswers, .totalCorrectAnswers, .gamesCount, .bestGame]
+        keys.forEach { key in
+            userDefaults.removeObject(forKey: key.rawValue)
+        }
     }
 }
 

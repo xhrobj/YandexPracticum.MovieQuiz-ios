@@ -10,13 +10,8 @@ final class MovieQuizViewController: UIViewController {
     private var displayedQuestionsCount = 0
     private var correctAnswers = 0
     
-    private lazy var statisticsService: StatisticsServiceProtocol = {
-        StatisticsService()
-    }()
-    
-    private lazy var alertPresenter: AlertPresenterProtocol = {
-        AlertPresenter()
-    }()
+    private lazy var statisticsService: StatisticsServiceProtocol = StatisticsService()
+    private lazy var alertPresenter: AlertPresenterProtocol = AlertPresenter()
     
     // MARK: - @IBOutlets
     
@@ -80,7 +75,7 @@ private extension MovieQuizViewController {
         guard let currentQuestion = currentQuestion else { return }
         
         displayedQuestionsCount += 1
-        let viewModel = convert(model: currentQuestion)
+        let viewModel = viewModel(from: currentQuestion)
         configureView(with: viewModel)
     }
 
@@ -98,7 +93,7 @@ private extension MovieQuizViewController {
             Ваш результат: \(correctAnswers)/\(questionsAmount)
             Количество сыгранных квизов: \(statisticsService.gamesCount)
             Рекорд: \(bestGame.correctAnswers)/\(bestGame.totalAnswers) (\(bestGame.date.dateTimeString))
-            Средняя точность: \(String(format: "%.2f", statisticsService.totalAccuracy))%
+            Средняя точность: \(String(format: "%.2f", statisticsService.averageAccuracyPercentage))%
             """
         
         let viewModel = QuizResultsViewModel(
@@ -208,7 +203,7 @@ private extension MovieQuizViewController {
         displayedQuestionsCount == questionsAmount
     }
     
-    func convert(model: QuizQuestion) -> QuizStepViewModel {
+    func viewModel(from model: QuizQuestion) -> QuizStepViewModel {
         QuizStepViewModel(
             questionNumber: "\(displayedQuestionsCount)/\(questionsAmount)",
             question: model.text,
