@@ -10,7 +10,7 @@ import Foundation
 struct NetworkClient {
     func fetch(endpoint: String, handler: @escaping (Result<Data, Error>) -> Void) {
         guard let url = URL(string: endpoint) else {
-            handler(.failure(NetworkError.invalidURL))
+            handler(.failure(NetworkClientError.invalidURL))
             return
         }
         
@@ -24,13 +24,13 @@ struct NetworkClient {
             
             if let response = response as? HTTPURLResponse,
                 response.statusCode < 200 || response.statusCode >= 300 {
-                handler(.failure(NetworkError.codeError))
+                handler(.failure(NetworkClientError.codeError))
                 
                 return
             }
             
-            guard let data = data else {
-                handler(.failure(NetworkError.codeError))
+            guard let data else {
+                handler(.failure(NetworkClientError.codeError))
                 return
             }
             
@@ -42,7 +42,7 @@ struct NetworkClient {
 }
 
 private extension NetworkClient {
-    enum NetworkError: Error {
+    enum NetworkClientError: Error {
         case invalidURL
         case codeError
     }

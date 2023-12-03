@@ -14,8 +14,13 @@ final class MockQuestionFactory: QuestionFactoryProtocol {
     private var questions: [QuizQuestion] = []
     
     func loadData() {
-        questions = loadQuestions()
-        delegate?.didLoadDataFromServer()
+        let delayInSeconds: TimeInterval = 2
+        DispatchQueue.main.asyncAfter(deadline: .now() + delayInSeconds) { [weak self] in
+            guard let self else { return }
+            
+            questions = loadQuestions()
+            delegate?.didLoadDataFromServer()
+        }
     }
     
     func requestNextQuestion() {

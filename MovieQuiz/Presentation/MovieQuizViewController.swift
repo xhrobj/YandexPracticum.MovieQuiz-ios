@@ -15,6 +15,7 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - @IBOutlets
     
+    @IBOutlet weak var loadingActivityIndicator: UIActivityIndicatorView!
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var movieImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
@@ -83,7 +84,7 @@ private extension MovieQuizViewController {
     func showAnswerResult(_ isCorrectAnswer: Bool) {
         let viewModel = QuizAnswerViewModel(
             imageBorder: isCorrectAnswer ? .correct : .wrong,
-            buttonsEnabled: false
+            isButtonsEnabled: false
         )
         configureView(with: viewModel)
     }
@@ -112,7 +113,7 @@ private extension MovieQuizViewController {
             question: "",
             image: UIImage(),
             imageBorder: .none,
-            buttonsEnabled: false
+            isButtonsEnabled: false
         )
         configureView(with: viewModel)
     }
@@ -127,6 +128,14 @@ private extension MovieQuizViewController {
 // MARK: -
 
 private extension MovieQuizViewController {
+    func showLoadingState() {
+        loadingActivityIndicator.startAnimating()
+    }
+    
+    func hideLoadingState() {
+        loadingActivityIndicator.stopAnimating()
+    }
+    
     func configureView(with viewModel: QuizResultsViewModel) {
         let alertModel = AlertModel(
             title: viewModel.title,
@@ -141,7 +150,7 @@ private extension MovieQuizViewController {
     
     func configureView(with viewModel: QuizAnswerViewModel) {
         configureMovieImageViewBorder(with: viewModel.imageBorder)
-        configureButtons(isEnabled: viewModel.buttonsEnabled)
+        configureButtons(isEnabled: viewModel.isButtonsEnabled)
     }
     
     func configureView(with viewModel: QuizStepViewModel) {
@@ -149,7 +158,7 @@ private extension MovieQuizViewController {
         questionLabel.text = viewModel.question
         movieImageView.image = viewModel.image
         configureMovieImageViewBorder(with: viewModel.imageBorder)
-        configureButtons(isEnabled: viewModel.buttonsEnabled)
+        configureButtons(isEnabled: viewModel.isButtonsEnabled)
     }
 
     func configureMovieImageViewBorder(with type: MovieImageBorderType) {
@@ -177,6 +186,11 @@ private extension MovieQuizViewController {
         movieImageView.layer.borderWidth = 8
         movieImageView.layer.cornerRadius = 20
         movieImageView.image = nil
+        
+        questionLabel.text = nil
+        
+        configureMovieImageViewBorder(with: .none)
+        configureButtons(isEnabled: false)
     }
     
     func configureQuestionFactory() {
@@ -218,7 +232,7 @@ private extension MovieQuizViewController {
             question: model.text,
             image: UIImage(named: model.imageName) ?? UIImage(),
             imageBorder: .none,
-            buttonsEnabled: true
+            isButtonsEnabled: true
         )
     }
     
@@ -228,6 +242,7 @@ private extension MovieQuizViewController {
     }
     
     func loadData() {
+        showLoadingState()
         questionFactory?.loadData()
     }
 }
@@ -237,6 +252,7 @@ private extension MovieQuizViewController {
 extension MovieQuizViewController: QuestionFactoryDelegate {
     func didLoadDataFromServer() {
         DispatchQueue.main.async { [weak self] in
+            self?.hideLoadingState()
             self?.startQuiz()
         }
     }
@@ -252,6 +268,7 @@ extension MovieQuizViewController: QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
 
+            hideLoadingState()
             alertPresenter.present(alertModel, for: self)
         }
     }

@@ -9,6 +9,7 @@ import Foundation
 
 struct IMDbMoviesLoader: MoviesLoadingProtocol {
     private let imdbAPIKey = "k_zcuw1ytf"
+    
     private let baseUrl = "https://imdb-api.com/en/API/"
     private let top250MoviesPath = "Top250Movies/"
     

@@ -107,18 +107,25 @@
                                     </stackView>
                                 </subviews>
                             </stackView>
+                            <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" hidesWhenStopped="YES" animating="YES" style="large" translatesAutoresizingMaskIntoConstraints="NO" id="ayy-Qf-cfm">
+                                <rect key="frame" x="188.5" y="436.5" width="37" height="37"/>
+                                <color key="color" name="YP White"/>
+                            </activityIndicatorView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" name="YP Black"/>
                         <constraints>
                             <constraint firstItem="8eK-W4-2XP" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" constant="10" id="Gry-tD-HbH"/>
+                            <constraint firstItem="ayy-Qf-cfm" firstAttribute="centerX" secondItem="6Tk-OE-BBY" secondAttribute="centerX" id="Q3h-Uk-cc5"/>
                             <constraint firstItem="8eK-W4-2XP" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="YA9-cY-RLO"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="bottom" secondItem="8eK-W4-2XP" secondAttribute="bottom" id="bj9-dS-9ir"/>
+                            <constraint firstItem="ayy-Qf-cfm" firstAttribute="centerY" secondItem="6Tk-OE-BBY" secondAttribute="centerY" id="nwH-vY-lY6"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="8eK-W4-2XP" secondAttribute="trailing" constant="20" id="pzs-LU-wA7"/>
                         </constraints>
                     </view>
                     <connections>
                         <outlet property="counterLabel" destination="zlV-So-HgH" id="C3q-fA-Eep"/>
+                        <outlet property="loadingActivityIndicator" destination="ayy-Qf-cfm" id="Bbh-7R-6Wk"/>
                         <outlet property="movieImageView" destination="H04-Nc-gKj" id="ZIj-XH-tG4"/>
                         <outlet property="noButton" destination="z1q-UX-2Eg" id="Zdt-Id-hFW"/>
                         <outlet property="questionLabel" destination="HZ0-GT-R9j" id="uYk-C1-m7D"/>

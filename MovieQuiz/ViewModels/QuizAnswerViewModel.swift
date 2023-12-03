@@ -7,5 +7,5 @@
 
 struct QuizAnswerViewModel {
     let imageBorder: MovieImageBorderType
-    let buttonsEnabled: Bool
+    let isButtonsEnabled: Bool
 }
