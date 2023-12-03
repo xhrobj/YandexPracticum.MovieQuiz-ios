@@ -1,5 +1,5 @@
 //
-//  QuestionFactory.swift
+//  MockQuestionFactory.swift
 //  MovieQuiz
 //
 //  Created by Mikhail Eliseev on 13.11.2023.
@@ -7,12 +7,16 @@
 
 import Foundation
 
-final class QuestionFactory: QuestionFactoryProtocol {
+final class MockQuestionFactory: QuestionFactoryProtocol {
     weak var delegate: QuestionFactoryDelegate?
     
     private var indexSet = Set<Int>()
+    private var questions: [QuizQuestion] = []
     
-    private lazy var questions: [QuizQuestion] = loadQuestions()
+    func loadData() {
+        questions = loadQuestions()
+        delegate?.didLoadDataFromServer()
+    }
     
     func requestNextQuestion() {
         guard let index = fetchNextIndex() else {
@@ -26,7 +30,7 @@ final class QuestionFactory: QuestionFactoryProtocol {
 
 // MARK: - Private methods
 
-private extension QuestionFactory {
+private extension MockQuestionFactory {
     func resetIndexSet() {
         indexSet = Set(0..<questions.count)
     }
@@ -46,7 +50,7 @@ private extension QuestionFactory {
     }
 }
 
-private extension QuestionFactory {
+private extension MockQuestionFactory {
     func loadQuestions() -> [QuizQuestion] {
         [
             QuizQuestion(

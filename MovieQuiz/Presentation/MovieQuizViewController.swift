@@ -29,7 +29,7 @@ final class MovieQuizViewController: UIViewController {
         configureQuestionFactory()
         configureView()
         
-        startQuiz()
+        loadData()
     }
 }
 
@@ -65,6 +65,7 @@ private extension MovieQuizViewController {
         guard !isLastQuestion() else {
             saveResults()
             showResults()
+            
             return
         }
         
@@ -179,8 +180,16 @@ private extension MovieQuizViewController {
     }
     
     func configureQuestionFactory() {
-        questionFactory = QuestionFactory()
+        configureMockQuestionFactory()
+    }
+    
+    func configureMockQuestionFactory() {
+        questionFactory = MockQuestionFactory()
         questionFactory?.delegate = self
+    }
+    
+    func configureIMDbQuestionFactory() {
+        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
     }
 }
 
@@ -217,11 +226,36 @@ private extension MovieQuizViewController {
         displayedQuestionsCount = 0
         correctAnswers = 0
     }
+    
+    func loadData() {
+        questionFactory?.loadData()
+    }
 }
 
 // MARK: - <QuestionFactoryDelegate>
 
 extension MovieQuizViewController: QuestionFactoryDelegate {
+    func didLoadDataFromServer() {
+        DispatchQueue.main.async { [weak self] in
+            self?.startQuiz()
+        }
+    }
+    
+    func didFailToLoadData(with error: Error) {
+        let alertModel = AlertModel(
+            title: "Что-то пошло не так(",
+            message: "Невозможно загрузить данные",
+            buttonTitle: "Попробовать еще раз",
+            buttonHandler: { [weak self] in self?.loadData() }
+        )
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            alertPresenter.present(alertModel, for: self)
+        }
+    }
+    
     func didReceiveNextQuestion(_ question: QuizQuestion?) {
         currentQuestion = question
         
