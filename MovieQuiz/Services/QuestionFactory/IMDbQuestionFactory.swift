@@ -54,7 +54,7 @@ final class IMDbQuestionFactory: QuestionFactoryProtocol {
             let imageData: Data
             
             do {
-                imageData = try Data(contentsOf: movie.imageURL)
+                imageData = try Data(contentsOf: movie.resizedImageURL)
             } catch {
                 delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.loadQuestionImageFailed)
                 return
