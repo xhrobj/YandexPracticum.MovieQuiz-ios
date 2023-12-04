@@ -194,7 +194,7 @@ private extension MovieQuizViewController {
     }
     
     func configureQuestionFactory() {
-        configureMockQuestionFactory()
+        configureIMDbQuestionFactory()
     }
     
     func configureMockQuestionFactory() {
@@ -215,6 +215,7 @@ private extension MovieQuizViewController {
     }
 
     func fetchNextQuestion() {
+        showLoadingState()
         questionFactory?.requestNextQuestion()
     }
     
@@ -230,7 +231,7 @@ private extension MovieQuizViewController {
         QuizStepViewModel(
             questionNumber: "\(displayedQuestionsCount)/\(questionsAmount)",
             question: model.text,
-            image: UIImage(named: model.imageName) ?? UIImage(),
+            image: UIImage(data: model.imageData) ?? UIImage(),
             imageBorder: .none,
             isButtonsEnabled: true
         )
@@ -243,24 +244,33 @@ private extension MovieQuizViewController {
     
     func loadData() {
         showLoadingState()
-        questionFactory?.loadData()
+        questionFactory?.loadQuestionsList()
     }
 }
 
 // MARK: - <QuestionFactoryDelegate>
 
 extension MovieQuizViewController: QuestionFactoryDelegate {
-    func didLoadDataFromServer() {
+    func didLoadQuestions() {
         DispatchQueue.main.async { [weak self] in
             self?.hideLoadingState()
             self?.startQuiz()
         }
     }
     
-    func didFailToLoadData(with error: Error) {
+    func didReceiveNextQuestion(_ question: QuizQuestion) {
+        currentQuestion = question
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.hideLoadingState()
+            self?.showQuestion()
+        }
+    }
+    
+    func didFailToLoadQuestionsList(with error: Error) {
         let alertModel = AlertModel(
             title: "Что-то пошло не так(",
-            message: "Невозможно загрузить данные",
+            message: "Невозможно загрузить данные\n[\(error.localizedDescription)]",
             buttonTitle: "Попробовать еще раз",
             buttonHandler: { [weak self] in self?.loadData() }
         )
@@ -272,12 +282,20 @@ extension MovieQuizViewController: QuestionFactoryDelegate {
             alertPresenter.present(alertModel, for: self)
         }
     }
-    
-    func didReceiveNextQuestion(_ question: QuizQuestion?) {
-        currentQuestion = question
+
+    func didFailToReceiveNextQuestion(with error: Error) {
+        let alertModel = AlertModel(
+            title: "Что-то пошло не так(",
+            message: "Невозможно загрузить данные вопроса\n[\(error.localizedDescription)]",
+            buttonTitle: "Попробовать еще раз",
+            buttonHandler: { [weak self] in self?.fetchNextQuestion() }
+        )
         
         DispatchQueue.main.async { [weak self] in
-            self?.showQuestion()
+            guard let self else { return }
+
+            hideLoadingState()
+            alertPresenter.present(alertModel, for: self)
         }
     }
 }

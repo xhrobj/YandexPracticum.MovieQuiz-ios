@@ -6,7 +6,8 @@
 //
 
 protocol QuestionFactoryDelegate: AnyObject {
-    func didReceiveNextQuestion(_ question: QuizQuestion?)
-    func didLoadDataFromServer()
-    func didFailToLoadData(with error: Error)
+    func didLoadQuestions()
+    func didReceiveNextQuestion(_ question: QuizQuestion)
+    func didFailToLoadQuestionsList(with error: Error)
+    func didFailToReceiveNextQuestion(with error: Error)
 }

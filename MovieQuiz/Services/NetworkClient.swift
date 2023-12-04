@@ -15,22 +15,20 @@ struct NetworkClient {
         }
         
         let request = URLRequest(url: url)
-        
+
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 handler(.failure(error))
                 return
             }
             
-            if let response = response as? HTTPURLResponse,
-                response.statusCode < 200 || response.statusCode >= 300 {
-                handler(.failure(NetworkClientError.codeError))
-                
+            if let response = response as? HTTPURLResponse, response.statusCode < 200 || response.statusCode >= 300 {
+                handler(.failure(NetworkClientError.invalidStatusCode))
                 return
             }
             
             guard let data else {
-                handler(.failure(NetworkClientError.codeError))
+                handler(.failure(NetworkClientError.invalidData))
                 return
             }
             
@@ -42,8 +40,20 @@ struct NetworkClient {
 }
 
 private extension NetworkClient {
-    enum NetworkClientError: Error {
+    enum NetworkClientError: LocalizedError {
         case invalidURL
-        case codeError
+        case invalidStatusCode
+        case invalidData
+        
+        var errorDescription: String? {
+            switch self {
+            case .invalidURL:
+                return "Некорректный URL запроса"
+            case .invalidStatusCode:
+                return "Код ответа сервера не в пределах ожидаемого диапазона"
+            case .invalidData:
+                return "Ошибка при получении данных с сервера"
+            }
+        }
     }
 }

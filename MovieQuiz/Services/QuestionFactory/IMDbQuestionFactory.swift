@@ -8,58 +8,114 @@
 import Foundation
 
 final class IMDbQuestionFactory: QuestionFactoryProtocol {
-    private let moviesLoader: MoviesLoadingProtocol
+    private let randomRatingRange = 5...8
+    private let moviesLoader: IMDbMoviesLoadingProtocol
+    
+    private var movies: [IMDbMovieDTO] = []
     
     weak var delegate: QuestionFactoryDelegate?
-    
-    private var indexSet = Set<Int>()
-    private var questions: [QuizQuestion] = []
-    
-    init(moviesLoader: MoviesLoadingProtocol, delegate: QuestionFactoryDelegate) {
+
+    init(moviesLoader: IMDbMoviesLoadingProtocol, delegate: QuestionFactoryDelegate) {
         self.moviesLoader = moviesLoader
         self.delegate = delegate
     }
     
-    func loadData() {
+    func loadQuestionsList() {
         moviesLoader.loadMovies { result in
             switch result {
-            case .success:
-                self.delegate?.didLoadDataFromServer()
+            case .success(let moviesList):
+                self.movies = moviesList
+                self.delegate?.didLoadQuestions()
             case .failure(let error):
-                self.delegate?.didFailToLoadData(with: error)
+                self.delegate?.didFailToLoadQuestionsList(with: error)
             }
         }
     }
     
     func requestNextQuestion() {
-        guard let index = fetchNextIndex() else {
-            delegate?.didReceiveNextQuestion(nil)
-            
+        guard !movies.isEmpty else {
+            delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.emptyQuestionsList)
             return
         }
+        
+        DispatchQueue.global().async { [weak self] in
+            guard let self else { return }
+            
+            guard let moviesIndex = (0..<self.movies.count).randomElement() else {
+                delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.questionPreparationFailed)
+                return
+            }
+            
+            guard let movie = self.movies[safe: moviesIndex] else {
+                delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.questionPreparationFailed)
+                return
+            }
+            
+            let imageData: Data
+            
+            do {
+                imageData = try Data(contentsOf: movie.imageURL)
+            } catch {
+                delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.loadQuestionImageFailed)
+                return
+            }
+            
+            guard let movieRating = Double(movie.rating) else {
+                delegate?.didFailToReceiveNextQuestion(with: QuestionFactoryError.questionPreparationFailed)
+                return
+            }
+            
+            let randomRating = randomRatingValue
+            let comparisionOperator = ComparisonOperator.random()
 
-        self.delegate?.didReceiveNextQuestion(self.questions[safe: index])
+            let question = QuizQuestion(
+                imageData: imageData,
+                text: "Рейтинг этого фильма \(comparisionOperator.description) чем \(randomRating)?",
+                correctAnswer: compare(
+                    movieRating: movieRating,
+                    with: Double(randomRating),
+                    using: comparisionOperator
+                ) ? .yes : .no
+            )
+            
+            delegate?.didReceiveNextQuestion(question)
+        }
     }
 }
 
 // MARK: - Private methods
 
 private extension IMDbQuestionFactory {
-    func resetIndexSet() {
-        indexSet = Set(0..<questions.count)
+    var randomRatingValue: Int {
+        Int.random(in: randomRatingRange)
     }
     
-    func fetchNextIndex() -> Int? {
-        if indexSet.isEmpty {
-            resetIndexSet()
+    func compare(movieRating: Double, with randomRating: Double, using operator: ComparisonOperator) -> Bool {
+        switch `operator` {
+        case .greaterThan:
+            return movieRating > randomRating
+        case .lessThan:
+            return movieRating < randomRating
+        }
+    }
+}
+
+private extension IMDbQuestionFactory {
+    enum ComparisonOperator {
+        case greaterThan
+        case lessThan
+        
+        static func random() -> ComparisonOperator {
+            return Int.random(in: 0...1) == 0 ? .greaterThan : .lessThan
         }
         
-        guard let index = indexSet.randomElement() else {
-            return nil
+        var description: String {
+            switch self {
+            case .greaterThan:
+                return "больше"
+            case .lessThan:
+                return "меньше"
+            }
         }
-        
-        indexSet.remove(index)
-        
-        return index
     }
 }
