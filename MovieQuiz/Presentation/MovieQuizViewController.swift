@@ -15,6 +15,7 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - @IBOutlets
     
+    @IBOutlet weak var loadingActivityIndicator: UIActivityIndicatorView!
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var movieImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
@@ -29,7 +30,7 @@ final class MovieQuizViewController: UIViewController {
         configureQuestionFactory()
         configureView()
         
-        startQuiz()
+        loadData()
     }
 }
 
@@ -65,6 +66,7 @@ private extension MovieQuizViewController {
         guard !isLastQuestion() else {
             saveResults()
             showResults()
+            
             return
         }
         
@@ -82,7 +84,7 @@ private extension MovieQuizViewController {
     func showAnswerResult(_ isCorrectAnswer: Bool) {
         let viewModel = QuizAnswerViewModel(
             imageBorder: isCorrectAnswer ? .correct : .wrong,
-            buttonsEnabled: false
+            isButtonsEnabled: false
         )
         configureView(with: viewModel)
     }
@@ -111,7 +113,7 @@ private extension MovieQuizViewController {
             question: "",
             image: UIImage(),
             imageBorder: .none,
-            buttonsEnabled: false
+            isButtonsEnabled: false
         )
         configureView(with: viewModel)
     }
@@ -126,6 +128,14 @@ private extension MovieQuizViewController {
 // MARK: -
 
 private extension MovieQuizViewController {
+    func showLoadingState() {
+        loadingActivityIndicator.startAnimating()
+    }
+    
+    func hideLoadingState() {
+        loadingActivityIndicator.stopAnimating()
+    }
+    
     func configureView(with viewModel: QuizResultsViewModel) {
         let alertModel = AlertModel(
             title: viewModel.title,
@@ -140,7 +150,7 @@ private extension MovieQuizViewController {
     
     func configureView(with viewModel: QuizAnswerViewModel) {
         configureMovieImageViewBorder(with: viewModel.imageBorder)
-        configureButtons(isEnabled: viewModel.buttonsEnabled)
+        configureButtons(isEnabled: viewModel.isButtonsEnabled)
     }
     
     func configureView(with viewModel: QuizStepViewModel) {
@@ -148,7 +158,7 @@ private extension MovieQuizViewController {
         questionLabel.text = viewModel.question
         movieImageView.image = viewModel.image
         configureMovieImageViewBorder(with: viewModel.imageBorder)
-        configureButtons(isEnabled: viewModel.buttonsEnabled)
+        configureButtons(isEnabled: viewModel.isButtonsEnabled)
     }
 
     func configureMovieImageViewBorder(with type: MovieImageBorderType) {
@@ -176,11 +186,24 @@ private extension MovieQuizViewController {
         movieImageView.layer.borderWidth = 8
         movieImageView.layer.cornerRadius = 20
         movieImageView.image = nil
+        
+        questionLabel.text = nil
+        
+        configureMovieImageViewBorder(with: .none)
+        configureButtons(isEnabled: false)
     }
     
     func configureQuestionFactory() {
-        questionFactory = QuestionFactory()
+        configureIMDbQuestionFactory()
+    }
+    
+    func configureMockQuestionFactory() {
+        questionFactory = MockQuestionFactory()
         questionFactory?.delegate = self
+    }
+    
+    func configureIMDbQuestionFactory() {
+        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
     }
 }
 
@@ -192,6 +215,7 @@ private extension MovieQuizViewController {
     }
 
     func fetchNextQuestion() {
+        showLoadingState()
         questionFactory?.requestNextQuestion()
     }
     
@@ -207,9 +231,9 @@ private extension MovieQuizViewController {
         QuizStepViewModel(
             questionNumber: "\(displayedQuestionsCount)/\(questionsAmount)",
             question: model.text,
-            image: UIImage(named: model.imageName) ?? UIImage(),
+            image: UIImage(data: model.imageData) ?? UIImage(),
             imageBorder: .none,
-            buttonsEnabled: true
+            isButtonsEnabled: true
         )
     }
     
@@ -217,16 +241,61 @@ private extension MovieQuizViewController {
         displayedQuestionsCount = 0
         correctAnswers = 0
     }
+    
+    func loadData() {
+        showLoadingState()
+        questionFactory?.loadQuestionsList()
+    }
 }
 
 // MARK: - <QuestionFactoryDelegate>
 
 extension MovieQuizViewController: QuestionFactoryDelegate {
-    func didReceiveNextQuestion(_ question: QuizQuestion?) {
+    func didLoadQuestions() {
+        DispatchQueue.main.async { [weak self] in
+            self?.hideLoadingState()
+            self?.startQuiz()
+        }
+    }
+    
+    func didReceiveNextQuestion(_ question: QuizQuestion) {
         currentQuestion = question
         
         DispatchQueue.main.async { [weak self] in
+            self?.hideLoadingState()
             self?.showQuestion()
+        }
+    }
+    
+    func didFailToLoadQuestionsList(with error: Error) {
+        let alertModel = AlertModel(
+            title: "Что-то пошло не так(",
+            message: "Невозможно загрузить данные\n[\(error.localizedDescription)]",
+            buttonTitle: "Попробовать еще раз",
+            buttonHandler: { [weak self] in self?.loadData() }
+        )
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            hideLoadingState()
+            alertPresenter.present(alertModel, for: self)
+        }
+    }
+
+    func didFailToReceiveNextQuestion(with error: Error) {
+        let alertModel = AlertModel(
+            title: "Что-то пошло не так(",
+            message: "Невозможно загрузить данные вопроса\n[\(error.localizedDescription)]",
+            buttonTitle: "Попробовать еще раз",
+            buttonHandler: { [weak self] in self?.fetchNextQuestion() }
+        )
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+
+            hideLoadingState()
+            alertPresenter.present(alertModel, for: self)
         }
     }
 }

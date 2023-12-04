@@ -12,5 +12,5 @@ struct QuizStepViewModel {
     let question: String
     let image: UIImage
     let imageBorder: MovieImageBorderType
-    let buttonsEnabled: Bool
+    let isButtonsEnabled: Bool
 }
