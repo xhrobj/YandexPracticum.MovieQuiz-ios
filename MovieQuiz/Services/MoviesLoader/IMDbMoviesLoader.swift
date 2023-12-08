@@ -19,7 +19,7 @@ struct IMDbMoviesLoader {
         baseUrl + top250MoviesPath + imdbAPIKey
     }
     
-    init(networkClient: NetworkRouting) {
+    init(networkClient: NetworkRouting = NetworkClient()) {
         self.networkClient = networkClient
     }
 }
