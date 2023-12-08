@@ -203,7 +203,10 @@ private extension MovieQuizViewController {
     }
     
     func configureIMDbQuestionFactory() {
-        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
+        questionFactory = IMDbQuestionFactory(
+            moviesLoader: IMDbMoviesLoader(networkClient: NetworkClient()),
+            delegate: self
+        )
     }
 }
 

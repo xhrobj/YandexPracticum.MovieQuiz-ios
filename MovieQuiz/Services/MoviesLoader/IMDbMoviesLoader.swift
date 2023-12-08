@@ -7,18 +7,26 @@
 
 import Foundation
 
-struct IMDbMoviesLoader: IMDbMoviesLoadingProtocol {
+struct IMDbMoviesLoader {
     private let imdbAPIKey = "k_zcuw1ytf"
     
     private let baseUrl = "https://imdb-api.com/en/API/"
     private let top250MoviesPath = "Top250Movies/"
     
-    private let networkClient = NetworkClient()
+    private let networkClient: NetworkRouting
     
     private var mostPopularMoviesEndpoint: String {
         baseUrl + top250MoviesPath + imdbAPIKey
     }
     
+    init(networkClient: NetworkRouting) {
+        self.networkClient = networkClient
+    }
+}
+
+// MARK: - <IMDbMoviesLoadingProtocol>
+
+extension IMDbMoviesLoader: IMDbMoviesLoadingProtocol {
     func loadMovies(handler: @escaping (Result<[IMDbMovieDTO], Error>) -> Void) {
         networkClient.fetch(endpoint: mostPopularMoviesEndpoint) { result in
             switch result {
@@ -49,6 +57,8 @@ struct IMDbMoviesLoader: IMDbMoviesLoadingProtocol {
         }
     }
 }
+
+// MARK: -
 
 private extension IMDbMoviesLoader {
     enum IMDbMoviesLoaderError: LocalizedError {

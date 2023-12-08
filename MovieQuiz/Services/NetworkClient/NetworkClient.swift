@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct NetworkClient {
+struct NetworkClient: NetworkRouting {
     func fetch(endpoint: String, handler: @escaping (Result<Data, Error>) -> Void) {
         guard let url = URL(string: endpoint) else {
             handler(.failure(NetworkClientError.invalidURL))
