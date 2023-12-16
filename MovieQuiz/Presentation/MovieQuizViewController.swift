@@ -138,6 +138,7 @@ private extension MovieQuizViewController {
     
     func configureView(with viewModel: QuizResultsViewModel) {
         let alertModel = AlertModel(
+            accessibilityIdentifier: "RoundResults",
             title: viewModel.title,
             message: viewModel.message,
             buttonTitle: viewModel.buttonTitle,
@@ -269,6 +270,7 @@ extension MovieQuizViewController: QuestionFactoryDelegate {
     
     func didFailToLoadQuestionsList(with error: Error) {
         let alertModel = AlertModel(
+            accessibilityIdentifier: nil,
             title: "Что-то пошло не так(",
             message: "Невозможно загрузить данные\n[\(error.localizedDescription)]",
             buttonTitle: "Попробовать еще раз",
@@ -285,6 +287,7 @@ extension MovieQuizViewController: QuestionFactoryDelegate {
 
     func didFailToReceiveNextQuestion(with error: Error) {
         let alertModel = AlertModel(
+            accessibilityIdentifier: nil,
             title: "Что-то пошло не так(",
             message: "Невозможно загрузить данные вопроса\n[\(error.localizedDescription)]",
             buttonTitle: "Попробовать еще раз",
