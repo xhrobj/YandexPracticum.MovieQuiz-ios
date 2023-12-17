@@ -8,7 +8,7 @@
 import XCTest
 @testable import MovieQuiz
 
-class IMDbMoviesLoaderTests: XCTestCase {
+final class IMDbMoviesLoaderTests: XCTestCase {
     func testSuccessLoading() {
         let stubNetworkClient = StubNetworkClient(emulateError: false)
         let loader = IMDbMoviesLoader(networkClient: stubNetworkClient)
