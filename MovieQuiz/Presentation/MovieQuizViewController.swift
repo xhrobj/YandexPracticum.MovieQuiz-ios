@@ -35,9 +35,9 @@ private extension MovieQuizViewController {
     }
 }
 
-// MARK: - Class API
+// MARK: - <MovieQuizViewControllerProtocol>
 
-extension MovieQuizViewController {
+extension MovieQuizViewController: MovieQuizViewControllerProtocol {
     func showLoadingState() {
         loadingActivityIndicator.startAnimating()
     }
