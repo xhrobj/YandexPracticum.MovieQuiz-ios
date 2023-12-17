@@ -6,12 +6,12 @@ final class MovieQuizViewController: UIViewController {
     
     // MARK: - @IBOutlets
     
-    @IBOutlet weak var loadingActivityIndicator: UIActivityIndicatorView!
+    @IBOutlet private weak var loadingActivityIndicator: UIActivityIndicatorView!
     @IBOutlet private weak var counterLabel: UILabel!
     @IBOutlet private weak var movieImageView: UIImageView!
     @IBOutlet private weak var questionLabel: UILabel!
-    @IBOutlet weak var noButton: UIButton!
-    @IBOutlet weak var yesButton: UIButton!
+    @IBOutlet private weak var noButton: UIButton!
+    @IBOutlet private weak var yesButton: UIButton!
     
     // MARK: - View lifecycle
     
@@ -27,11 +27,11 @@ final class MovieQuizViewController: UIViewController {
 
 private extension MovieQuizViewController {
     @IBAction func noButtonTapped() {
-        presenter.handleAnswerAndMoveNextStep(userAnswer: .no)
+        presenter.noButtonTapped()
     }
     
     @IBAction func yesButtonTapped() {
-        presenter.handleAnswerAndMoveNextStep(userAnswer: .yes)
+        presenter.yesButtonTapped()
     }
 }
 

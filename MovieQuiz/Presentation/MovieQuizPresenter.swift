@@ -31,19 +31,14 @@ final class MovieQuizPresenter {
 // MARK: - Class API
 
 extension MovieQuizPresenter {
-    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResultType) {
-        let isCorrect = isCorrectAnswer(answer)
-        if isCorrect {
-            correctAnswers += 1
-        }
-        
-        showAnswerResult(isCorrect)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + nextQuestionDelayInSeconds) { [weak self] in
-            self?.showNextQuestionOrResults()
-        }
+    func noButtonTapped() {
+        handleAnswerAndMoveNextStep(userAnswer: .no)
     }
     
+    func yesButtonTapped() {
+        handleAnswerAndMoveNextStep(userAnswer: .yes)
+    }
+
     func restartQuiz() {
         startQuiz()
     }
@@ -98,23 +93,6 @@ extension MovieQuizPresenter: QuestionFactoryDelegate {
 // MARK: - Private methods
 
 private extension MovieQuizPresenter {
-    func configureQuestionFactory() {
-        configureIMDbQuestionFactory()
-    }
-    
-    func configureMockQuestionFactory() {
-        questionFactory = MockQuestionFactory()
-        questionFactory?.delegate = self
-    }
-    
-    func configureIMDbQuestionFactory() {
-        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
-    }
-}
-
-// MARK: -
-
-private extension MovieQuizPresenter {
     func loadData() {
         viewController?.showLoadingState()
         questionFactory?.loadQuestionsList()
@@ -134,6 +112,19 @@ private extension MovieQuizPresenter {
     func fetchNextQuestion() {
         viewController?.showLoadingState()
         questionFactory?.requestNextQuestion()
+    }
+    
+    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResultType) {
+        let isCorrect = isCorrectAnswer(answer)
+        if isCorrect {
+            correctAnswers += 1
+        }
+        
+        showAnswerResult(isCorrect)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + nextQuestionDelayInSeconds) { [weak self] in
+            self?.showNextQuestionOrResults()
+        }
     }
     
     func isLastQuestion() -> Bool {
@@ -217,5 +208,22 @@ private extension MovieQuizPresenter {
             imageBorder: .none
         )
         viewController?.showGameResults(viewModel)
+    }
+}
+
+// MARK: -
+
+private extension MovieQuizPresenter {
+    func configureQuestionFactory() {
+        configureIMDbQuestionFactory()
+    }
+    
+    func configureMockQuestionFactory() {
+        questionFactory = MockQuestionFactory()
+        questionFactory?.delegate = self
+    }
+    
+    func configureIMDbQuestionFactory() {
+        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
     }
 }
