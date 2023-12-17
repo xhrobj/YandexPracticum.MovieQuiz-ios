@@ -1,16 +1,7 @@
 import UIKit
 
 final class MovieQuizViewController: UIViewController {
-    private static let nextQuestionDelayInSeconds: TimeInterval = 1
-    
-    private let questionsAmount = 10
-    
-    private var questionFactory: QuestionFactoryProtocol?
-    private var currentQuestion: QuizQuestion?
-    private var displayedQuestionsCount = 0
-    private var correctAnswers = 0
-    
-    private lazy var statisticsService: StatisticsServiceProtocol = StatisticsService()
+    private var presenter: MovieQuizPresenter!
     private lazy var alertPresenter: AlertPresenterProtocol = AlertPresenter()
     
     // MARK: - @IBOutlets
@@ -27,10 +18,8 @@ final class MovieQuizViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        configureQuestionFactory()
         configureView()
-        
-        loadData()
+        configurePresenter()
     }
 }
 
@@ -38,96 +27,17 @@ final class MovieQuizViewController: UIViewController {
 
 private extension MovieQuizViewController {
     @IBAction func noButtonTapped() {
-        handleAnswerAndMoveNextStep(userAnswer: .no)
+        presenter.handleAnswerAndMoveNextStep(userAnswer: .no)
     }
     
     @IBAction func yesButtonTapped() {
-        handleAnswerAndMoveNextStep(userAnswer: .yes)
+        presenter.handleAnswerAndMoveNextStep(userAnswer: .yes)
     }
 }
 
-// MARK: - Private methods
+// MARK: - Class API
 
-private extension MovieQuizViewController {
-    func handleAnswerAndMoveNextStep(userAnswer answer: AnswerResultType) {
-        let isCorrect = isCorrectAnswer(answer)
-        if isCorrect {
-            correctAnswers += 1
-        }
-        
-        showAnswerResult(isCorrect)
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.nextQuestionDelayInSeconds) { [weak self] in
-            self?.showNextQuestionOrResults()
-        }
-    }
-    
-    func showNextQuestionOrResults() {
-        guard !isLastQuestion() else {
-            saveResults()
-            showResults()
-            
-            return
-        }
-        
-        fetchNextQuestion()
-    }
-    
-    func showQuestion() {
-        guard let currentQuestion = currentQuestion else { return }
-        
-        displayedQuestionsCount += 1
-        let viewModel = viewModel(from: currentQuestion)
-        configureView(with: viewModel)
-    }
-
-    func showAnswerResult(_ isCorrectAnswer: Bool) {
-        let viewModel = QuizAnswerViewModel(
-            imageBorder: isCorrectAnswer ? .correct : .wrong,
-            isButtonsEnabled: false
-        )
-        configureView(with: viewModel)
-    }
-
-    func showResults() {
-        let bestGame = statisticsService.bestGame
-        let message = """
-            Ваш результат: \(correctAnswers)/\(questionsAmount)
-            Количество сыгранных квизов: \(statisticsService.gamesCount)
-            Рекорд: \(bestGame.correctAnswers)/\(bestGame.totalAnswers) (\(bestGame.date.dateTimeString))
-            Средняя точность: \(String(format: "%.2f", statisticsService.averageAccuracyPercentage))%
-            """
-        
-        let viewModel = QuizResultsViewModel(
-            title: "Этот раунд окончен!",
-            message: message,
-            buttonTitle: "Сыграть ещё раз",
-            imageBorder: .none
-        )
-        configureView(with: viewModel)
-    }
-    
-    func showStartState() {
-        let viewModel = QuizStepViewModel(
-            questionNumber: "",
-            question: "",
-            image: UIImage(),
-            imageBorder: .none,
-            isButtonsEnabled: false
-        )
-        configureView(with: viewModel)
-    }
-    
-    func startQuiz() {
-        resetCounters()
-        showStartState()
-        fetchNextQuestion()
-    }
-}
-
-// MARK: -
-
-private extension MovieQuizViewController {
+extension MovieQuizViewController {
     func showLoadingState() {
         loadingActivityIndicator.startAnimating()
     }
@@ -136,24 +46,30 @@ private extension MovieQuizViewController {
         loadingActivityIndicator.stopAnimating()
     }
     
-    func configureView(with viewModel: QuizResultsViewModel) {
-        let alertModel = AlertModel(
-            accessibilityIdentifier: "RoundResults",
-            title: viewModel.title,
-            message: viewModel.message,
-            buttonTitle: viewModel.buttonTitle,
-            buttonHandler: { [weak self] in self?.startQuiz() }
-        )
-        alertPresenter.present(alertModel, for: self)
-        
-        configureMovieImageViewBorder(with: viewModel.imageBorder)
+    func showStartState(_ viewModel: QuizStepViewModel) {
+        configureView(with: viewModel)
     }
     
-    func configureView(with viewModel: QuizAnswerViewModel) {
-        configureMovieImageViewBorder(with: viewModel.imageBorder)
-        configureButtons(isEnabled: viewModel.isButtonsEnabled)
+    func showQuestion(_ viewModel: QuizStepViewModel) {
+        configureView(with: viewModel)
+    }
+
+    func showAnswerResult(_ viewModel: QuizAnswerViewModel) {
+        configureView(with: viewModel)
     }
     
+    func showGameResults(_ viewModel: QuizResultsViewModel) {
+        configureView(with: viewModel)
+    }
+    
+    func showError(_ viewModel: QuizErrorViewModel) {
+        configureView(with: viewModel)
+    }
+}
+
+// MARK: - Private methods
+
+private extension MovieQuizViewController {
     func configureView(with viewModel: QuizStepViewModel) {
         counterLabel.text = viewModel.questionNumber
         questionLabel.text = viewModel.question
@@ -161,7 +77,36 @@ private extension MovieQuizViewController {
         configureMovieImageViewBorder(with: viewModel.imageBorder)
         configureButtons(isEnabled: viewModel.isButtonsEnabled)
     }
-
+    
+    func configureView(with viewModel: QuizAnswerViewModel) {
+        configureMovieImageViewBorder(with: viewModel.imageBorder)
+        configureButtons(isEnabled: viewModel.isButtonsEnabled)
+    }
+    
+    func configureView(with viewModel: QuizResultsViewModel) {
+        configureMovieImageViewBorder(with: viewModel.imageBorder)
+        
+        let alertModel = AlertModel(
+            accessibilityIdentifier: viewModel.accessibilityIdentifier,
+            title: viewModel.title,
+            message: viewModel.message,
+            buttonTitle: viewModel.buttonTitle,
+            buttonHandler: { [weak self] in self?.presenter.restartQuiz() }
+        )
+        alertPresenter.present(alertModel, for: self)
+    }
+    
+    func configureView(with viewModel: QuizErrorViewModel) {
+        let alertModel = AlertModel(
+            accessibilityIdentifier: viewModel.accessibilityIdentifier,
+            title: "Что-то пошло не так(",
+            message: viewModel.message,
+            buttonTitle: "Попробовать еще раз",
+            buttonHandler: viewModel.retryAction
+        )
+        alertPresenter.present(alertModel, for: self)
+    }
+    
     func configureMovieImageViewBorder(with type: MovieImageBorderType) {
         let color: UIColor
         
@@ -181,7 +126,7 @@ private extension MovieQuizViewController {
         noButton.isEnabled = isEnabled
         yesButton.isEnabled = isEnabled
     }
-    
+
     func configureView() {
         movieImageView.layer.masksToBounds = true
         movieImageView.layer.borderWidth = 8
@@ -193,112 +138,12 @@ private extension MovieQuizViewController {
         configureMovieImageViewBorder(with: .none)
         configureButtons(isEnabled: false)
     }
-    
-    func configureQuestionFactory() {
-        configureIMDbQuestionFactory()
-    }
-    
-    func configureMockQuestionFactory() {
-        questionFactory = MockQuestionFactory()
-        questionFactory?.delegate = self
-    }
-    
-    func configureIMDbQuestionFactory() {
-        questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
-    }
 }
 
-// MARK: - Data/Model
+// MARK: -
 
 private extension MovieQuizViewController {
-    func saveResults() {
-        statisticsService.storeGameResult(totalAnswers: questionsAmount, correctAnswers: correctAnswers)
-    }
-
-    func fetchNextQuestion() {
-        showLoadingState()
-        questionFactory?.requestNextQuestion()
-    }
-    
-    func isCorrectAnswer(_ answer: AnswerResultType) -> Bool {
-        currentQuestion?.correctAnswer == answer
-    }
-    
-    func isLastQuestion() -> Bool {
-        displayedQuestionsCount == questionsAmount
-    }
-    
-    func viewModel(from model: QuizQuestion) -> QuizStepViewModel {
-        QuizStepViewModel(
-            questionNumber: "\(displayedQuestionsCount)/\(questionsAmount)",
-            question: model.text,
-            image: UIImage(data: model.imageData) ?? UIImage(),
-            imageBorder: .none,
-            isButtonsEnabled: true
-        )
-    }
-    
-    func resetCounters() {
-        displayedQuestionsCount = 0
-        correctAnswers = 0
-    }
-    
-    func loadData() {
-        showLoadingState()
-        questionFactory?.loadQuestionsList()
-    }
-}
-
-// MARK: - <QuestionFactoryDelegate>
-
-extension MovieQuizViewController: QuestionFactoryDelegate {
-    func didLoadQuestions() {
-        DispatchQueue.main.async { [weak self] in
-            self?.hideLoadingState()
-            self?.startQuiz()
-        }
-    }
-    
-    func didReceiveNextQuestion(_ question: QuizQuestion) {
-        currentQuestion = question
-        
-        DispatchQueue.main.async { [weak self] in
-            self?.hideLoadingState()
-            self?.showQuestion()
-        }
-    }
-    
-    func didFailToLoadQuestionsList(with error: Error) {
-        let alertModel = AlertModel(
-            accessibilityIdentifier: nil,
-            title: "Что-то пошло не так(",
-            message: "Невозможно загрузить данные\n[\(error.localizedDescription)]",
-            buttonTitle: "Попробовать еще раз",
-            buttonHandler: { [weak self] in self?.loadData() }
-        )
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            hideLoadingState()
-            alertPresenter.present(alertModel, for: self)
-        }
-    }
-
-    func didFailToReceiveNextQuestion(with error: Error) {
-        let alertModel = AlertModel(
-            accessibilityIdentifier: nil,
-            title: "Что-то пошло не так(",
-            message: "Невозможно загрузить данные вопроса\n[\(error.localizedDescription)]",
-            buttonTitle: "Попробовать еще раз",
-            buttonHandler: { [weak self] in self?.fetchNextQuestion() }
-        )
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-
-            hideLoadingState()
-            alertPresenter.present(alertModel, for: self)
-        }
+    func configurePresenter() {
+        presenter = MovieQuizPresenter(viewController: self)
     }
 }
