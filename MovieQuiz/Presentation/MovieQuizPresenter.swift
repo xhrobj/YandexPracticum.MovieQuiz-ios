@@ -230,7 +230,9 @@ private extension MovieQuizPresenter {
 
 // MARK: -
 
-// NOTE: для теста MovieQuizPresenterTests/testPresenterConvertModel()
+// NOTE: в задании есть требование протестировать у презентера приватный метод конвертации модели,
+// откроем доступ к нему через этот экстеншн;
+// используется в тесте: MovieQuizPresenterTests/testPresenterConvertModel()
 extension MovieQuizPresenter {
     func convert(model: QuizQuestion) -> QuizStepViewModel {
         viewModel(from: model)
