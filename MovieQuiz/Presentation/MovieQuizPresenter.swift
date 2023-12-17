@@ -227,3 +227,12 @@ private extension MovieQuizPresenter {
         questionFactory = IMDbQuestionFactory(moviesLoader: IMDbMoviesLoader(), delegate: self)
     }
 }
+
+// MARK: -
+
+// NOTE: для теста MovieQuizPresenterTests/testPresenterConvertModel()
+extension MovieQuizPresenter {
+    func convert(model: QuizQuestion) -> QuizStepViewModel {
+        viewModel(from: model)
+    }
+}
