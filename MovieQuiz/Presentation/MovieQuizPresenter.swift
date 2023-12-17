@@ -18,9 +18,9 @@ final class MovieQuizPresenter {
 
     private lazy var statisticsService: StatisticsServiceProtocol = StatisticsService()
     
-    weak var viewController: MovieQuizViewController?
+    weak var viewController: MovieQuizViewControllerProtocol?
     
-    init(viewController: MovieQuizViewController) {
+    init(viewController: MovieQuizViewControllerProtocol) {
         self.viewController = viewController
         
         configureQuestionFactory()
